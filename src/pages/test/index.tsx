@@ -1,0 +1,10 @@
+import AuthListChecker from "./UserList";
+
+export default function TestPage() {
+  return (
+    <div>
+      <h1>Testing</h1>
+      <AuthListChecker />
+    </div>
+  );
+}
