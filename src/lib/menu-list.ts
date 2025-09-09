@@ -1,6 +1,4 @@
-import { type LucideIcon, PlusCircle, Cog, User } from "lucide-react";
-import type { User as UserLike } from "./type";
-
+import { type LucideIcon, Cog, User } from "lucide-react";
 export type Submenu = { href: string; label: string; active: boolean };
 export type Menu = {
   href: string;
@@ -11,7 +9,7 @@ export type Menu = {
 };
 export type Group = { groupLabel: string; menus: Menu[] };
 
-export function getMenuList(pathname: string, user: UserLike): Group[] {
+export function getMenuList(pathname: string): Group[] {
   return [
     {
       groupLabel: "Administration",

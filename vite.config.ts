@@ -1,7 +1,10 @@
-import path from "path";
-import tailwindcss from "@tailwindcss/vite";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import react from "@vitejs/plugin-react";
-import { defineConfig } from "vite";
+import tailwindcss from "@tailwindcss/vite";
+import { defineConfig } from "vitest/config";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
   base: "/",
@@ -10,7 +13,10 @@ export default defineConfig({
     alias: { "@": path.resolve(__dirname, "./src") },
     dedupe: ["react", "react-dom"],
   },
-  optimizeDeps: { include: ["zustand"] },
+  optimizeDeps: {
+    include: ["zustand"],
+  },
+
   test: {
     globals: true,
     environment: "jsdom",

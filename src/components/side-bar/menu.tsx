@@ -11,7 +11,6 @@ import {
   TooltipContent,
   TooltipProvider,
 } from "@/components/ui/tooltip";
-import { useAuthStore } from "@/lib/auth-store";
 import { CollapseMenuButton } from "./collapse-menu-button";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 
@@ -22,9 +21,7 @@ interface MenuProps {
 export function Menu({ isOpen }: MenuProps) {
   const { pathname } = useLocation();
 
-  const user = useAuthStore((s) => s.user);
-
-  const menuList = getMenuList(pathname, user!);
+  const menuList = getMenuList(pathname);
 
   const navigate = useNavigate();
 
