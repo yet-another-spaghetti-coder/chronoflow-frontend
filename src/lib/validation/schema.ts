@@ -36,7 +36,7 @@ export const organizerRegistrationSchema = z
     user_name: z
       .string()
       .trim()
-      .min(3, "Username must be at least 3 characters")
+      .min(6, "Username must be at least 6 characters")
       .regex(
         /^[a-zA-Z0-9._-]+$/,
         "Only letters, numbers, dot, underscore, hyphen"
@@ -78,3 +78,33 @@ export const organizerRegistrationSchema = z
   });
 
 export type OrganizerRegistration = z.infer<typeof organizerRegistrationSchema>;
+
+export const memberLookupSchema = z.object({
+  event_id: z.string().trim().min(1, "Event ID is required"),
+  member_id: z.string().trim().min(1, "Member ID is required"),
+});
+
+export type MemberLookup = z.infer<typeof memberLookupSchema>;
+
+export const memberCompleteRegistrationSchema = z.object({
+  event_id: z.string().trim().min(1, "Event ID is required"),
+  member_id: z.string().trim().min(1, "Member ID is required"),
+  user_name: z
+    .string()
+    .trim()
+    .min(6, "Username must be at least 6 characters")
+    .regex(
+      /^[a-zA-Z0-9._-]+$/,
+      "Only letters, numbers, dot, underscore, hyphen"
+    ),
+  user_password: z.string().min(8, "Password must be at least 8 characters"),
+  user_mobile: z
+    .string()
+    .trim()
+    .min(3, "Mobile is required")
+    .regex(/^[0-9+\-\s()]{3,20}$/, "Invalid mobile format"),
+});
+
+export type MemberCompleteRegistration = z.infer<
+  typeof memberCompleteRegistrationSchema
+>;

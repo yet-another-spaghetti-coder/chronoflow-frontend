@@ -1,7 +1,3 @@
-export default function UserAssignmentPage() {
-  return (
-    <div>
-      <h2>User Assignment Page</h2>
-    </div>
-  );
-}
+const MembersPage = () => <h2>Members Page</h2>;
+
+export default MembersPage;

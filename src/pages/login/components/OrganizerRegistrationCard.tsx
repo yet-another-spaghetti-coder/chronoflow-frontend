@@ -17,10 +17,10 @@ import {
   type OrganizerRegistration,
 } from "@/lib/validation/schema";
 import { registerOrganizer } from "@/api/registrationApi";
-import { DateTimePicker } from "./date-time-picker";
+import { DateTimePicker } from "../../../components/ui/date-time-picker";
 
 type OrganizerRegistrationFormProps = {
-  onSignIn?: () => void;
+  onBack: () => void;
 };
 
 const defaultValues: DefaultValues<OrganizerRegistration> = {
@@ -34,7 +34,7 @@ const defaultValues: DefaultValues<OrganizerRegistration> = {
 };
 
 export function OrganizerRegistrationCard({
-  onSignIn,
+  onBack,
 }: OrganizerRegistrationFormProps) {
   const {
     register,
@@ -93,7 +93,7 @@ export function OrganizerRegistrationCard({
           </CardDescription>
           <button
             type="button"
-            onClick={onSignIn}
+            onClick={onBack}
             className="text-sm underline underline-offset-4"
           >
             Back to sign in

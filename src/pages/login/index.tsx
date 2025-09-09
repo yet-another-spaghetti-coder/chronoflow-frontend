@@ -1,8 +1,12 @@
 import { motion, useReducedMotion, type Variants } from "framer-motion";
 import { CheckCheck } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { LoginCard } from "./components/LoginCard";
-import { OrganizerRegistrationCard } from "./components/RegistrationCard";
+import { OrganizerRegistrationCard } from "./components/OrganizerRegistrationCard";
+import { RegistrationSelectionCard } from "./components/RegistrationSelectionCard";
+import { MemberRegistrationCard } from "./components/MemberRegistrationCard";
+import { useMemberInvite } from "./hooks/useMemberInvite";
+import { MemberLookupCard } from "./components/MemberLookUpCard";
 
 const points = [
   "Lightweight planning for internal workshops, symposiums, and team celebrations.",
@@ -37,7 +41,7 @@ const itemVariants: Variants = {
 type View =
   | "login"
   | "signup-organizer"
-  | "signup-staff"
+  | "signup-member"
   | "forgot-password"
   | "registration-selection";
 
@@ -45,6 +49,38 @@ export default function LoginPage() {
   const [view, setView] = useState<View>("login");
   const bg = `${import.meta.env.BASE_URL}chrono_flow_login_bg.png`;
   const reduceMotion = useReducedMotion();
+  const {
+    prefill,
+    loading: prefillLoading,
+    lookup,
+    fromInviteLink,
+  } = useMemberInvite();
+
+  const onBack = () => {
+    setView("login");
+  };
+
+  const onOrganizerRegistration = () => {
+    setView("signup-organizer");
+  };
+
+  const onMemberRegistration = () => {
+    setView("signup-member");
+  };
+
+  const onForgotPassword = () => {
+    setView("forgot-password");
+  };
+
+  const onRegistrationSelection = () => {
+    setView("registration-selection");
+  };
+
+  useEffect(() => {
+    if (fromInviteLink) {
+      setView("signup-member");
+    }
+  }, [fromInviteLink]);
 
   return (
     <div className="relative grid min-h-svh overflow-hidden bg-background lg:grid-cols-[60%_40%]">
@@ -113,10 +149,63 @@ export default function LoginPage() {
             view === "signup-organizer" ? "max-w-3xl" : "max-w-md"
           }`}
         >
-          {view === "login" ? (
-            <LoginCard onRegister={() => setView("signup-organizer")} />
-          ) : (
-            <OrganizerRegistrationCard onSignIn={() => setView("login")} />
+          {view === "login" && (
+            <LoginCard
+              onRegistrationSelection={onRegistrationSelection}
+              onForgotPassword={onForgotPassword}
+            />
+          )}
+
+          {view === "registration-selection" && (
+            <RegistrationSelectionCard
+              onBack={onBack}
+              onOrganizerRegistration={onOrganizerRegistration}
+              onMemberRegistration={onMemberRegistration}
+            />
+          )}
+
+          {view === "signup-organizer" && (
+            <OrganizerRegistrationCard onBack={onBack} />
+          )}
+
+          {view === "signup-member" && (
+            <>
+              {prefillLoading && (
+                <div className="w-full max-w-md rounded-2xl border border-black/5 bg-background/85 p-6 text-center shadow-xl">
+                  <p>Loading invitation…</p>
+                </div>
+              )}
+
+              {!prefillLoading && prefill && (
+                <MemberRegistrationCard
+                  onBack={onBack}
+                  prefill={prefill}
+                  fromInviteLink={fromInviteLink}
+                />
+              )}
+
+              {!prefillLoading && !prefill && (
+                <MemberLookupCard
+                  onBack={onBack}
+                  onSearch={async ({ event_id, member_id }) => {
+                    await lookup(event_id, member_id);
+                  }}
+                />
+              )}
+            </>
+          )}
+
+          {view === "forgot-password" && (
+            <div className="w-full max-w-md rounded-2xl border border-black/5 bg-background/85 p-6 text-center shadow-xl backdrop-blur-md">
+              <p>Forget password card</p>
+              <button
+                type="button"
+                onClick={onBack}
+                className="mt-4 text-sm underline underline-offset-4"
+              >
+                Back to sign in
+              </button>
+            </div>
           )}
         </div>
       </div>

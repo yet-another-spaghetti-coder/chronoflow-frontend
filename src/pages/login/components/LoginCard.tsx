@@ -1,4 +1,4 @@
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { cn } from "@/lib/utils";
@@ -20,10 +20,14 @@ import { loginUserSchema, type LoginUser } from "@/lib/validation/schema";
 import { useEffect, useState } from "react";
 
 type LoginCardProps = {
-  onRegister?: () => void;
+  onRegistrationSelection: () => void;
+  onForgotPassword: () => void;
 };
 
-export function LoginCard({ onRegister }: LoginCardProps) {
+export function LoginCard({
+  onRegistrationSelection,
+  onForgotPassword,
+}: LoginCardProps) {
   const [showPwd, setShowPwd] = useState(false);
   const navigate = useNavigate();
 
@@ -122,12 +126,13 @@ export function LoginCard({ onRegister }: LoginCardProps) {
           <div className="grid gap-2">
             <div className="flex items-center justify-between">
               <Label htmlFor="password">Password</Label>
-              <Link
-                to="/forgot-password"
+              <button
+                type="button"
+                onClick={onForgotPassword}
                 className="text-sm underline-offset-4 hover:underline"
               >
                 Forgot your password?
-              </Link>
+              </button>
             </div>
             <div className="relative">
               <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -188,7 +193,7 @@ export function LoginCard({ onRegister }: LoginCardProps) {
           Don&apos;t have an account?{" "}
           <button
             type="button"
-            onClick={onRegister}
+            onClick={onRegistrationSelection}
             className="font-medium underline underline-offset-4"
           >
             Register
