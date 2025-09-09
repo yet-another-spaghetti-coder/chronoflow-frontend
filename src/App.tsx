@@ -9,15 +9,19 @@ function AuthBootstrap({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     (async () => {
-      await refresh();
+      try {
+        await refresh();
+      } catch {}
       setReady(true);
     })();
   }, []);
+
   if (!ready) return null;
   return <>{children}</>;
 }
 
 export default function App() {
+  
   useTokenAutoRefresh();
 
   return (
