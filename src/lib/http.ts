@@ -11,6 +11,9 @@ export const http = axios.create({
   withCredentials: true,
 });
 
+http.defaults.xsrfCookieName = "XSRF-TOKEN";
+http.defaults.xsrfHeaderName = "X-XSRF-TOKEN";
+
 const isLoginPath = (url?: string) => {
   if (!url) return false;
   const p = url.startsWith("http") ? new URL(url).pathname : url;
@@ -18,15 +21,6 @@ const isLoginPath = (url?: string) => {
 };
 
 http.interceptors.request.use((config) => {
-  if (!isLoginPath(config.url)) {
-    const token = useAuthStore.getState().accessToken;
-    if (token) {
-      config.headers = config.headers ?? {};
-      (
-        config.headers as Record<string, string>
-      ).Authentication = `Bearer ${token}`;
-    }
-  }
   return config;
 });
 
@@ -48,21 +42,11 @@ http.interceptors.response.use(
     config._retry = true;
 
     const ok = await refresh();
-    
+
     if (!ok) {
       useAuthStore.getState().clear();
       return Promise.reject(error);
     }
-
-    const newToken = useAuthStore.getState().accessToken;
-    config.headers = config.headers ?? {};
-
-    if (newToken) {
-      (
-        config.headers as Record<string, string>
-      ).Authentication = `Bearer ${newToken}`;
-    }
-
     return http(config);
   }
 );

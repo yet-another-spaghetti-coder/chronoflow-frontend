@@ -1,4 +1,4 @@
-import { useForm, type DefaultValues } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,29 +16,18 @@ import { registerMember } from "@/api/registrationApi";
 import {
   memberCompleteRegistrationSchema,
   type MemberCompleteRegistration,
+  type MemberPrefill,
 } from "@/lib/validation/schema";
 
 type Prefill = {
-  event_id: string;
-  member_id: string;
-  eventName: string;
-  email: string;
-  role: string;
-};
+  user_id: string;
+} & MemberPrefill;
 
 type MemberRegistrationCardProps = {
   onBack: () => void;
   fromInviteLink?: boolean;
   prefill: Prefill;
 };
-
-const toDefaults = (p: Prefill): DefaultValues<MemberCompleteRegistration> => ({
-  event_id: p.event_id,
-  member_id: p.member_id,
-  user_name: "",
-  user_password: "",
-  user_mobile: "",
-});
 
 export function MemberRegistrationCard({
   onBack,
@@ -53,7 +42,12 @@ export function MemberRegistrationCard({
     reset,
   } = useForm<MemberCompleteRegistration>({
     resolver: zodResolver(memberCompleteRegistrationSchema),
-    defaultValues: toDefaults(prefill),
+    defaultValues: {
+      user_id: prefill.user_id,
+      user_name: "",
+      user_password: "",
+      user_mobile: "",
+    },
   });
 
   const onSubmit = handleSubmit(async (values) => {
@@ -65,7 +59,7 @@ export function MemberRegistrationCard({
         text: "Your member account has been created.",
         confirmButtonText: "OK",
       });
-      reset(toDefaults(prefill));
+      reset();
     } catch (err: any) {
       const msg =
         err?.response?.data?.message ??
@@ -107,9 +101,9 @@ export function MemberRegistrationCard({
         >
           {/* Read-only invite info */}
           <div className="grid gap-2 md:col-span-1">
-            <Label>Event</Label>
+            <Label>Organization Name</Label>
             <Input
-              value={prefill.eventName}
+              value={prefill.organisation_name}
               readOnly
               className="h-10 bg-muted cursor-default"
             />
@@ -126,19 +120,8 @@ export function MemberRegistrationCard({
             <p className="h-5 text-sm leading-5">&nbsp;</p>
           </div>
 
-          <div className="grid gap-2 md:col-span-1">
-            <Label>Role</Label>
-            <Input
-              value={prefill.role}
-              readOnly
-              className="h-10 bg-muted cursor-default"
-            />
-            <p className="h-5 text-sm leading-5">&nbsp;</p>
-          </div>
-
           {/* Hidden IDs for submission */}
-          <input type="hidden" {...register("event_id")} />
-          <input type="hidden" {...register("member_id")} />
+          <input type="hidden" {...register("user_id")} />
 
           {/* Username */}
           <div className="grid gap-2 md:col-span-1">
@@ -151,20 +134,6 @@ export function MemberRegistrationCard({
             />
             <p className="h-5 text-sm leading-5 text-destructive">
               {errors.user_name?.message ?? "\u00A0"}
-            </p>
-          </div>
-
-          {/* Mobile */}
-          <div className="grid gap-2 md:col-span-1">
-            <Label htmlFor="user_mobile">Mobile</Label>
-            <Input
-              id="user_mobile"
-              className="h-10"
-              {...register("user_mobile")}
-              aria-invalid={!!errors.user_mobile}
-            />
-            <p className="h-5 text-sm leading-5 text-destructive">
-              {errors.user_mobile?.message ?? "\u00A0"}
             </p>
           </div>
 
@@ -181,6 +150,20 @@ export function MemberRegistrationCard({
             />
             <p className="h-5 text-sm leading-5 text-destructive">
               {errors.user_password?.message ?? "\u00A0"}
+            </p>
+          </div>
+
+          {/* Mobile */}
+          <div className="grid gap-2 md:col-span-1">
+            <Label htmlFor="user_mobile">Mobile</Label>
+            <Input
+              id="user_mobile"
+              className="h-10"
+              {...register("user_mobile")}
+              aria-invalid={!!errors.user_mobile}
+            />
+            <p className="h-5 text-sm leading-5 text-destructive">
+              {errors.user_mobile?.message ?? "\u00A0"}
             </p>
           </div>
 

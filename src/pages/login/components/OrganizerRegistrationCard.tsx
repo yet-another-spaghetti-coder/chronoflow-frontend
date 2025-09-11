@@ -17,7 +17,6 @@ import {
   type OrganizerRegistration,
 } from "@/lib/validation/schema";
 import { registerOrganizer } from "@/api/registrationApi";
-import { DateTimePicker } from "../../../components/ui/date-time-picker";
 
 type OrganizerRegistrationFormProps = {
   onBack: () => void;
@@ -29,8 +28,8 @@ const defaultValues: DefaultValues<OrganizerRegistration> = {
   user_password: "",
   user_email: "",
   user_mobile: "",
-  event_name: "",
-  event_description: "",
+  organisation_name: "",
+  organisation_address: "",
 };
 
 export function OrganizerRegistrationCard({
@@ -42,24 +41,20 @@ export function OrganizerRegistrationCard({
     formState: { errors, isSubmitting },
     setError,
     reset,
-    setValue,
-    watch,
   } = useForm<OrganizerRegistration>({
     resolver: zodResolver(organizerRegistrationSchema),
     defaultValues,
   });
 
-  const eventStartTime = watch("event_start_time");
-  const eventEndTime = watch("event_end_time");
-
   const onSubmit = handleSubmit(async (values) => {
     try {
+      
       await registerOrganizer(values);
 
       await Swal.fire({
         icon: "success",
         title: "Registration successful",
-        text: "Organizer & event have been created.",
+        text: "Organizer & organisation have been created.",
         confirmButtonText: "OK",
       });
       reset();
@@ -83,13 +78,10 @@ export function OrganizerRegistrationCard({
   return (
     <Card className="w-full max-w-3xl">
       <CardHeader className="text-center">
-        {/* Title centered */}
         <CardTitle className="text-2xl">Organizer Registration</CardTitle>
-
-        {/* Row with description on left and back link on right */}
         <div className="mt-1 flex items-center justify-between">
           <CardDescription className="text-left">
-            Create your organizer account and event details.
+            Create your organizer account and organisation details.
           </CardDescription>
           <button
             type="button"
@@ -176,68 +168,35 @@ export function OrganizerRegistrationCard({
             </p>
           </div>
 
-          {/* Event Name */}
+          {/* Organisation name (required) */}
           <div className="grid gap-2 md:col-span-1">
-            <Label htmlFor="event_name">Event name</Label>
+            <Label htmlFor="organisation_name">Organisation name</Label>
             <Input
-              id="event_name"
-              {...register("event_name")}
-              aria-invalid={!!errors.event_name}
+              id="organisation_name"
+              {...register("organisation_name")}
+              aria-invalid={!!errors.organisation_name}
             />
             <p className="h-5 text-sm leading-5 text-destructive">
-              {errors.event_name?.message ?? "\u00A0"}
+              {errors.organisation_name?.message ?? "\u00A0"}
             </p>
           </div>
 
-          {/* Event Description (full width) */}
+          {/* Organisation address (optional, full width) */}
           <div className="grid gap-2 md:col-span-2">
-            <Label htmlFor="event_description">Event description</Label>
+            <Label htmlFor="organisation_address">Organisation address</Label>
             <Input
-              id="event_description"
+              id="organisation_address"
               placeholder="(optional)"
-              {...register("event_description")}
-              aria-invalid={!!errors.event_description}
+              {...register("organisation_address")}
+              aria-invalid={!!errors.organisation_address}
             />
             <p className="h-5 text-sm leading-5 text-destructive">
-              {errors.event_description?.message ?? "\u00A0"}
+              {errors.organisation_address?.message ?? "\u00A0"}
             </p>
           </div>
 
-          {/* Start time */}
-          <div className="grid gap-2 md:col-span-1">
-            <Label htmlFor="event_start_time">Start time</Label>
-            <DateTimePicker
-              date={eventStartTime}
-              setDateTime={(d) =>
-                d &&
-                setValue("event_start_time", d, {
-                  shouldDirty: true,
-                  shouldValidate: true,
-                })
-              }
-            />
-            <p className="h-5 text-sm leading-5 text-destructive">
-              {errors.event_start_time?.message ?? "\u00A0"}
-            </p>
-          </div>
-
-          {/* End time */}
-          <div className="grid gap-2 md:col-span-1">
-            <Label htmlFor="event_end_time">End time</Label>
-            <DateTimePicker
-              date={eventEndTime}
-              setDateTime={(d) =>
-                d &&
-                setValue("event_end_time", d, {
-                  shouldDirty: true,
-                  shouldValidate: true,
-                })
-              }
-            />
-            <p className="h-5 text-sm leading-5 text-destructive">
-              {errors.event_end_time?.message ?? "\u00A0"}
-            </p>
-          </div>
+          {/* spacer to balance grid */}
+          <div className="md:col-span-1" />
 
           <div className="md:col-span-2 flex justify-center">
             <Button
@@ -245,7 +204,7 @@ export function OrganizerRegistrationCard({
               className="h-11 w-full md:w-auto"
               disabled={isSubmitting}
             >
-              {isSubmitting ? "Creating..." : "Create organizer & event"}
+              {isSubmitting ? "Creating..." : "Create organizer & organisation"}
             </Button>
           </div>
         </form>

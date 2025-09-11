@@ -49,11 +49,13 @@ export default function LoginPage() {
   const [view, setView] = useState<View>("login");
   const bg = `${import.meta.env.BASE_URL}chrono_flow_login_bg.png`;
   const reduceMotion = useReducedMotion();
+
   const {
     prefill,
     loading: prefillLoading,
     lookup,
     fromInviteLink,
+    userId,
   } = useMemberInvite();
 
   const onBack = () => {
@@ -179,18 +181,13 @@ export default function LoginPage() {
               {!prefillLoading && prefill && (
                 <MemberRegistrationCard
                   onBack={onBack}
-                  prefill={prefill}
+                  prefill={{ ...prefill, user_id: userId || "" }}
                   fromInviteLink={fromInviteLink}
                 />
               )}
 
               {!prefillLoading && !prefill && (
-                <MemberLookupCard
-                  onBack={onBack}
-                  onSearch={async ({ event_id, member_id }) => {
-                    await lookup(event_id, member_id);
-                  }}
-                />
+                <MemberLookupCard onBack={onBack} onSearch={lookup} />
               )}
             </>
           )}

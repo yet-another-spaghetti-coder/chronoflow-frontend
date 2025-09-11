@@ -2,28 +2,51 @@ import { http } from "@/lib/http";
 import type {
   MemberCompleteRegistration,
   MemberLookup,
+  MemberPrefill,
   OrganizerRegistration,
 } from "@/lib/validation/schema";
 
 export async function registerOrganizer(input: OrganizerRegistration) {
+  console.log("Registering organizer with input:", input);
   const payload = {
-    ...input,
-    event_start_time: input.event_start_time.toISOString(),
-    event_end_time: input.event_end_time.toISOString(),
+    name: input.name,
+    username: input.user_name,
+    userPassword: input.user_password,
+    userEmail: input.user_email,
+    mobile: input.user_mobile,
+    organizationName: input.organisation_name,
+    organizationAddress: input.organisation_address,
+  };
+  const res = await http.post("/system/reg/organizer", payload);
+  return res.data;
+}
+
+export async function registerMember(input: MemberCompleteRegistration) {
+  const payload = {
+    userId: Number(input.user_id),
+    username: input.user_name,
+    password: input.user_password,
+    phone: input.user_mobile,
   };
 
-  const res = await http.post("/system/organizer/register", payload);
+  const res = await http.post("/system/reg/member", payload);
   return res.data;
 }
 
-export async function registerMember(data: MemberCompleteRegistration) {
-  const res = await http.post("/system/registration/member", data);
-  return res.data;
-}
+export async function getTenantMemberInfo(
+  input: MemberLookup
+): Promise<MemberPrefill> {
+  const payload = {
+    organizationId: input.organisation_id,
+    userId: input.user_id,
+  };
 
-export async function getTenantMemberInfo(params: MemberLookup) {
-  const res = await http.get("/system/registration/member-info", {
-    params,
-  });
-  return res.data;
+  const res = await http.post("/system/reg/search", payload);
+
+  const body = res?.data?.data as any;
+
+  return {
+    organisation_name: body.organizationName,
+    email: body.email,
+  };
 }

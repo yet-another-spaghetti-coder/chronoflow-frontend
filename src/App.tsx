@@ -2,7 +2,7 @@ import { RouterProvider } from "react-router-dom";
 import router from "./router/route";
 import { useEffect, useState } from "react";
 import { refresh } from "./api/authApi";
-import { useTokenAutoRefresh } from "@/hooks/use-token-auto-refresh";
+import { useSessionKeepAlive } from "@/hooks/use-session-keep-alive";
 
 function AuthBootstrap({ children }: { children: React.ReactNode }) {
   const [ready, setReady] = useState(false);
@@ -10,19 +10,22 @@ function AuthBootstrap({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     (async () => {
       try {
+        // Hydrate user from cookie on app start
         await refresh();
-      } catch {}
+      } catch {
+        // ignore; user just isn't logged in
+      }
       setReady(true);
     })();
   }, []);
 
-  if (!ready) return null;
+  if (!ready) return null; // or a spinner/skeleton
   return <>{children}</>;
 }
 
 export default function App() {
-  
-  useTokenAutoRefresh();
+  // Periodic session keep-alive; bootstrap already did the first refresh.
+  useSessionKeepAlive({ intervalMs: 10 * 60 * 1000, runOnInit: true });
 
   return (
     <AuthBootstrap>
