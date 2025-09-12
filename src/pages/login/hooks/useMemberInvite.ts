@@ -1,62 +1,74 @@
+import { getTenantMemberInfo } from "@/api/registrationApi";
+import type { MemberLookup, MemberPrefill } from "@/lib/validation/schema";
 import { useEffect, useState, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
 
-export type MemberPrefill = {
-  event_id: string;
-  member_id: string;
-  eventName: string;
-  email: string;
-  role: string;
+export type UseMemberInviteType = {
+  prefill: MemberPrefill | null;
+  loading: boolean;
+  err: string | null;
+  lookup: (params: MemberLookup) => Promise<MemberPrefill>;
+  fromInviteLink: boolean;
+  userId: string | null;
+  clearInvite: () => void;
 };
 
-export function useMemberInvite() {
+export function useMemberInvite(): UseMemberInviteType {
   const [params] = useSearchParams();
   const [prefill, setPrefill] = useState<MemberPrefill | null>(null);
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
 
-  const lookup = useCallback(async (event_id: string, member_id: string) => {
-    setLoading(true);
+  const lookup = useCallback(
+    async ({ organisation_id, user_id }: MemberLookup) => {
+      setLoading(true);
+      setErr(null);
+      try {
+        const result = await getTenantMemberInfo({ organisation_id, user_id });
+
+        const p: MemberPrefill = {
+          organisation_name: result.organisation_name,
+          email: result.email,
+        };
+
+        setPrefill(p);
+        setUserId(user_id);
+        return p;
+      } catch (e: any) {
+        const msg = e?.message ?? "Lookup failed";
+        setErr(msg);
+        setPrefill(null);
+        throw new Error(msg);
+      } finally {
+        setLoading(false);
+      }
+    },
+    []
+  );
+
+  const clearInvite = useCallback(() => {
+    setPrefill(null);
+    setUserId(null);
     setErr(null);
-    try {
-      //   const res = await getTenantMemberInfo({ event_id, member_id });
-
-      await new Promise((res) => setTimeout(res, 500)); // simulate latency
-      const res = {
-        data: {
-          eventName: "Sample Event",
-          email: "member@example.com",
-          role: "Staff",
-        },
-      };
-
-      const { eventName, email, role } = res.data;
-      const p: MemberPrefill = { event_id, member_id, eventName, email, role };
-      setPrefill(p);
-      return p;
-    } catch (e: any) {
-      const msg = e?.response?.data?.message ?? e?.message ?? "Lookup failed";
-      setErr(msg);
-      setPrefill(null);
-      throw e;
-    } finally {
-      setLoading(false);
-    }
   }, []);
 
   useEffect(() => {
-    const eid = params.get("event_id");
-    const mid = params.get("member_id");
-    if (!eid || !mid) return;
+    const eid = params.get("organisation_id");
+    const uid = params.get("user_id");
+    if (!eid || !uid) return;
 
     (async () => {
       try {
-        await lookup(eid, mid);
+        await lookup({ organisation_id: eid, user_id: uid });
+        setUserId(uid);
       } catch {}
     })();
   }, [params, lookup]);
 
-  const fromInviteLink = !!(params.get("event_id") && params.get("member_id"));
+  const fromInviteLink = !!(
+    params.get("organisation_id") && params.get("user_id")
+  );
 
-  return { prefill, loading, err, lookup, fromInviteLink };
+  return { prefill, loading, err, lookup, fromInviteLink, userId, clearInvite };
 }

@@ -24,71 +24,47 @@ export const MAX_REGISTRATION_FORM_LENGTH = {
   eventDesc: 255,
 } as const;
 
-const requiredDate = (label: string) =>
-  z.custom<Date>(
-    (v): v is Date => v instanceof Date && !Number.isNaN(v.getTime()),
-    { message: `${label} is required` }
-  );
-
-export const organizerRegistrationSchema = z
-  .object({
-    name: z.string().trim().min(1, "Name is required"),
-    user_name: z
-      .string()
-      .trim()
-      .min(6, "Username must be at least 6 characters")
-      .regex(
-        /^[a-zA-Z0-9._-]+$/,
-        "Only letters, numbers, dot, underscore, hyphen"
-      ),
-    user_password: z.string().min(8, "Password must be at least 8 characters"),
-    user_email: z
-      .string()
-      .trim()
-      .min(1, "Email is required")
-      .regex(/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/, "Invalid email address"),
-    user_mobile: z
-      .string()
-      .trim()
-      .min(3, "Mobile is required")
-      .regex(/^[0-9+\-\s()]{3,20}$/, "Invalid mobile format"),
-    event_name: z.string().trim().min(1, "Event name is required"),
-    event_description: z
-      .string()
-      .max(MAX_REGISTRATION_FORM_LENGTH.eventDesc)
-      .optional(),
-    event_start_time: requiredDate("Start time"),
-    event_end_time: requiredDate("End time"),
-  })
-  .superRefine((v, ctx) => {
-    if (
-      v.event_start_time instanceof Date &&
-      v.event_end_time instanceof Date &&
-      !Number.isNaN(v.event_start_time.getTime()) &&
-      !Number.isNaN(v.event_end_time.getTime())
-    ) {
-      if (v.event_end_time.getTime() <= v.event_start_time.getTime()) {
-        ctx.addIssue({
-          path: ["event_end_time"],
-          code: z.ZodIssueCode.custom,
-          message: "End time must be after start time",
-        });
-      }
-    }
-  });
+export const organizerRegistrationSchema = z.object({
+  name: z.string().trim().min(1, "Name is required"),
+  user_name: z
+    .string()
+    .trim()
+    .min(6, "Username must be at least 6 characters")
+    .regex(
+      /^[a-zA-Z0-9._-]+$/,
+      "Only letters, numbers, dot, underscore, hyphen"
+    ),
+  user_password: z.string().min(8, "Password must be at least 8 characters"),
+  user_email: z
+    .string()
+    .trim()
+    .min(1, "Email is required")
+    .regex(/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/, "Invalid email address"),
+  user_mobile: z
+    .string()
+    .trim()
+    .min(3, "Mobile is required")
+    .regex(/^[0-9+\-\s()]{3,20}$/, "Invalid mobile format"),
+  organisation_name: z.string().trim().min(1, "Organisation name is required"),
+  organisation_address: z.string().max(255).optional(),
+});
 
 export type OrganizerRegistration = z.infer<typeof organizerRegistrationSchema>;
 
 export const memberLookupSchema = z.object({
-  event_id: z.string().trim().min(1, "Event ID is required"),
-  member_id: z.string().trim().min(1, "Member ID is required"),
+  organisation_id: z.string().trim().min(1, "Organisation ID is required"),
+  user_id: z.string().trim().min(1, "User ID is required"),
 });
 
 export type MemberLookup = z.infer<typeof memberLookupSchema>;
 
+export type MemberPrefill = {
+  organisation_name: string;
+  email: string;
+};
+
 export const memberCompleteRegistrationSchema = z.object({
-  event_id: z.string().trim().min(1, "Event ID is required"),
-  member_id: z.string().trim().min(1, "Member ID is required"),
+  user_id: z.string().trim().min(1, "User ID is required"),
   user_name: z
     .string()
     .trim()
