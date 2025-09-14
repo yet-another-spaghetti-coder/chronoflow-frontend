@@ -11,7 +11,6 @@ const router = createBrowserRouter([
     path: "/login",
     element: <LoginPage />,
   },
-   { path: "/members", element: <MembersPage /> },
   {
     path: "/",
     element: <RequireAuth />,
@@ -20,7 +19,7 @@ const router = createBrowserRouter([
         element: <AppLayout />,
         children: [
           { index: true, element: <RootPage /> },
-          // { path: "members", element: <MembersPage /> },
+          { path: "members", element: <MembersPage /> },
         ],
       },
     ],

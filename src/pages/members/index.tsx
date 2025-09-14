@@ -1,7 +1,7 @@
 import { DataTableLoading } from "@/components/data-table/data-table-skeleton";
 import { Card, CardContent } from "@/components/ui/card";
 import MembersTable from "./components/get_members_table/data-table";
-import { MemberAdminColumns } from "./components/get_members_table/columns";
+import { MemberColumns } from "./components/get_members_table/columns";
 import { useMembers } from "./hooks/userMember";
 
 export default function MembersPage() {
@@ -22,7 +22,7 @@ export default function MembersPage() {
           <div className="overflow-x-auto">
             <div className="min-w-[960px]">
               <MembersTable
-                columns={MemberAdminColumns(onRefresh)}
+                columns={MemberColumns(onRefresh)}
                 data={members}
                 onRefresh={onRefresh}
               />

@@ -29,6 +29,7 @@ import { type Member } from "@/lib/validation/schema";
 import { roleFilterOptions } from "@/lib/shared/role";
 import { registeredFilterOptions } from "@/lib/shared/member";
 import BulkMemberUploadSheet from "../MemberBulkUpload";
+import CreateMemberSheet from "../MemberConfigForm";
 
 type MembersTableProps = {
   columns: ColumnDef<Member, any>[];
@@ -90,7 +91,8 @@ export default function MembersTable({
           ]}
           buttonRight={
             <div className="flex items-center gap-2">
-              <BulkMemberUploadSheet onDone={onRefresh} />
+              <BulkMemberUploadSheet onRefresh={onRefresh} />
+              <CreateMemberSheet onRefresh={onRefresh} />
             </div>
           }
         />

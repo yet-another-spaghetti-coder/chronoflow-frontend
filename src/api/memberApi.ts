@@ -1,57 +1,60 @@
 import { http } from "@/lib/http";
-import type { ApiResponse } from "@/lib/type";
+import type { MemberBulkUpsertResult } from "@/lib/shared/member";
 import { unwrap } from "@/lib/utils";
 import {
-  type BulkUpsertResult,
   type Member,
+  type MemberConfig,
   MembersResponseSchema,
 } from "@/lib/validation/schema";
 
 export async function getMembers(): Promise<Member[]> {
-  const fakeRes: ApiResponse<Member[]> = {
-    code: 0,
-    data: [
-      {
-        id: 1,
-        name: "lushuwen",
-        email: "e1241986@u.nus.edu",
-        phone: "82423931",
-        roles: [0, 1],
-        registered: true,
-      },
-      {
-        id: 2,
-        name: "soesoe",
-        email: "e1111111@u.nus.edu",
-        phone: "999999",
-        roles: [0],
-        registered: true,
-      },
-      {
-        id: 3,
-        name: "cyl01",
-        email: "1@qq.com",
-        phone: "82423931",
-        roles: [1],
-        registered: false,
-      },
-    ],
-    msg: "ok",
-  };
-
-  await new Promise((r) => setTimeout(r, 300));
-
-  const raw = unwrap<Member[]>(fakeRes);
+  const res = await http.get("/organizer/users");
+  const raw = unwrap<Member[]>(res.data);
   return MembersResponseSchema.parse(raw);
 }
 
 export async function uploadMembersExcel(
   file: File
-): Promise<BulkUpsertResult> {
+): Promise<MemberBulkUpsertResult> {
   const form = new FormData();
-  form.append("file", file);
+  form.append("file", file, file.name);
 
-  const res = await http.post("/organizer/users/bulk-upsert", form);
+  try {
+    const res = await http.post("/organizer/users/bulk-upsert", form, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+    return unwrap<MemberBulkUpsertResult>(res.data);
+  } catch (err: any) {
+    throw err;
+  }
+}
 
-  return unwrap<BulkUpsertResult>(res.data);
+export async function createMember(input: MemberConfig): Promise<number> {
+  const payload = {
+    email: input.email,
+    roleIds: input.roleIds,
+    ...(input.remark ? { remark: input.remark } : {}),
+  };
+  const res = await http.post("/organizer/create/user", payload);
+  return unwrap<number>(res.data);
+}
+
+export async function updateMember(
+  id: number,
+  input: MemberConfig
+): Promise<boolean> {
+  const payload = {
+    email: input.email,
+    roleIds: input.roleIds,
+    ...(input.remark ? { remark: input.remark } : {}),
+  };
+  const res = await http.patch(`/organizer/update/user/${id}`, payload);
+  return res.data;
+}
+
+export async function deleteMember(id: number): Promise<boolean> {
+  const res = await http.delete(`/organizer/delete/user/${id}`);
+  return res.data;
 }

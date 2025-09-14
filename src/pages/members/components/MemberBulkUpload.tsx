@@ -47,9 +47,9 @@ export default function BulkMemberUploadSheet({
 
     try {
       const res = await uploadMembersExcel(file);
+      console.log(res);
       setResult(res);
       setResultDialogOpen(true);
-      onRefresh();
     } catch (e: any) {
       setErr(e?.message ?? "Upload failed");
       setResultDialogOpen(true);
@@ -167,7 +167,17 @@ export default function BulkMemberUploadSheet({
             </Button>
           </div>
 
-          <Dialog open={resultDialogOpen} onOpenChange={setResultDialogOpen}>
+          <Dialog
+            open={resultDialogOpen}
+            onOpenChange={(open) => {
+              setResultDialogOpen(open);
+              if (!open) {
+                onRefresh();
+                setResult(null);
+                setErr(null);
+              }
+            }}
+          >
             <DialogContent className="max-w-lg">
               <DialogHeader>
                 {err ? (
@@ -235,7 +245,14 @@ export default function BulkMemberUploadSheet({
               )}
 
               <DialogFooter>
-                <Button onClick={() => setResultDialogOpen(false)}>
+                <Button
+                  onClick={() => {
+                    setResultDialogOpen(false);
+                    onRefresh();
+                    setResult(null);
+                    setErr(null);
+                  }}
+                >
                   Close
                 </Button>
               </DialogFooter>

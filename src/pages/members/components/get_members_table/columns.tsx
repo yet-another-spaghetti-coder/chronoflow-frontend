@@ -1,11 +1,13 @@
-// components/get_members_table/columns.tsx
 import { type ColumnDef } from "@tanstack/react-table";
 import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
 import { Button } from "@/components/ui/button";
 import type { Member } from "@/lib/validation/schema";
 import { mapRoleIdsToKeys } from "@/lib/shared/role";
+import MemberConfigFormSheet from "../MemberConfigForm";
+import Swal from "sweetalert2";
+import { deleteMember } from "@/api/memberApi";
 
-export const MemberAdminColumns = (
+export const MemberColumns = (
   onRefresh: () => Promise<void> | void
 ): ColumnDef<Member>[] => [
   {
@@ -13,35 +15,52 @@ export const MemberAdminColumns = (
     header: "Action",
     cell: ({ row }) => {
       const member = row.original;
+      
+      const onDelete = async () => {
+        const result = await Swal.fire({
+          title: "Delete member?",
+          html: `This will remove <b>${member.email}</b>.`,
+          icon: "warning",
+          showCancelButton: true,
+          confirmButtonText: "Yes, delete",
+          cancelButtonText: "Cancel",
+          reverseButtons: true,
+          focusCancel: true,
+        });
+
+        if (!result.isConfirmed) return;
+
+        try {
+          await deleteMember(member.id);
+          await Swal.fire({
+            icon: "success",
+            title: "Deleted",
+            text: "The member has been deleted.",
+            confirmButtonText: "OK",
+          });
+          await onRefresh();
+        } catch (err: any) {
+          await Swal.fire({
+            icon: "error",
+            title: "Delete failed",
+            text:
+              err?.message ?? "Unable to delete the member. Please try again.",
+            confirmButtonText: "OK",
+          });
+        }
+      };
+
       return (
         <div className="flex gap-2">
-          <Button
-            size="sm"
-            variant="destructive"
-            onClick={async () => {
-              if (confirm(`Delete ${member.email}?`)) {
-                // TODO: await deleteMember(member.id)
-                await onRefresh();
-              }
-            }}
-          >
+          <Button size="sm" variant="destructive" onClick={onDelete}>
             Delete
           </Button>
+          <MemberConfigFormSheet member={member} onRefresh={onRefresh} />
         </div>
       );
     },
     enableSorting: false,
     enableHiding: false,
-  },
-  {
-    accessorKey: "id",
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="ID" />
-    ),
-    cell: ({ row }) => (
-      <div className="font-mono text-xs">{row.getValue("id")}</div>
-    ),
-    size: 80,
   },
   {
     accessorKey: "name",
