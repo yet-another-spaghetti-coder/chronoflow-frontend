@@ -1,5 +1,6 @@
 export type Role = "ORGANIZER" | "MANAGER" | "STAFF";
 
+//Role normalization for session data
 export function normalizeRoles(input?: string | string[] | null): Role[] {
   if (!input) return [];
 
@@ -44,7 +45,7 @@ export function mapRoleIdToKey(roleId: number): string {
 }
 
 //Role Filtering
-export const ROLE_KEYS = ["ORGANIZER", "MANAGER", "STAFF"] as const;
+export const ROLE_KEYS = ["ADMIN", "ORGANIZER", "MANAGER", "STAFF"] as const;
 
 export function roleFilterOptions(): { label: string; value: string }[] {
   return ROLE_KEYS.map((k) => ({ label: k, value: k }));
@@ -52,12 +53,15 @@ export function roleFilterOptions(): { label: string; value: string }[] {
 
 //Role Options for UI
 export const ROLE_ID_TO_NAME: Record<number, string> = {
+  1: "ADMIN",
   2: "ORGANIZER",
   3: "MANAGER",
   4: "STAFF",
 };
 
-export const ROLE_OPTIONS = Object.entries(ROLE_ID_TO_NAME).map(([id, label]) => ({
-  id: Number(id),
-  label,
-}));
+export const ROLE_OPTIONS = Object.entries(ROLE_ID_TO_NAME).map(
+  ([id, label]) => ({
+    id: Number(id),
+    label,
+  })
+);

@@ -43,7 +43,6 @@ type View =
   | "login"
   | "signup-organizer"
   | "signup-member"
-  | "forgot-password"
   | "registration-selection";
 
 export default function LoginPage() {
@@ -72,10 +71,6 @@ export default function LoginPage() {
 
   const onMemberRegistration = () => {
     setView("signup-member");
-  };
-
-  const onForgotPassword = () => {
-    setView("forgot-password");
   };
 
   const onRegistrationSelection = () => {
@@ -166,10 +161,7 @@ export default function LoginPage() {
           }`}
         >
           {view === "login" && (
-            <LoginCard
-              onRegistrationSelection={onRegistrationSelection}
-              onForgotPassword={onForgotPassword}
-            />
+            <LoginCard onRegistrationSelection={onRegistrationSelection} />
           )}
 
           {view === "registration-selection" && (
@@ -204,19 +196,6 @@ export default function LoginPage() {
                 <MemberLookupCard onBack={onBack} onSearch={lookup} />
               )}
             </>
-          )}
-
-          {view === "forgot-password" && (
-            <div className="w-full max-w-md rounded-2xl border border-black/5 bg-background/85 p-6 text-center shadow-xl backdrop-blur-md">
-              <p>Forget password card</p>
-              <button
-                type="button"
-                onClick={onBack}
-                className="mt-4 text-sm underline underline-offset-4"
-              >
-                Back to sign in
-              </button>
-            </div>
           )}
         </div>
       </div>

@@ -3,7 +3,7 @@ import { z } from "zod";
 //Login
 //later need to adjust the password length to at least 8 characters
 export const loginUserSchema = z.object({
-  username: z.string().trim().min(4, "Username is required"),
+  username: z.string().trim().min(6, "Invalid username"),
   password: z.string(),
   remember: z.boolean(),
 });
@@ -16,22 +16,23 @@ export const organizerRegistrationSchema = z.object({
   username: z
     .string()
     .trim()
-    .min(4, "Username must be at least 4 characters")
+    .min(6, "Invalid username")
     .regex(
       /^[a-zA-Z0-9._-]+$/,
       "Only letters, numbers, dot, underscore, hyphen"
     ),
-  user_password: z.string().min(8, "Password must be at least 8 characters"),
+  user_password: z
+    .string()
+    .min(8, "Password must be at least 8 characters")
+    .max(100, "Password must not exceed 100 characters"),
   user_email: z
     .string()
     .trim()
-    .min(1, "Email is required")
     .regex(/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/, "Invalid email address"),
   user_mobile: z
     .string()
     .trim()
-    .min(3, "Mobile is required")
-    .regex(/^[0-9+\-\s()]{3,20}$/, "Invalid mobile format"),
+    .regex(/^(?:\+65|0065)?[89]\d{7}$/, "Invalid Singapore mobile number"),
   organisation_name: z.string().trim().min(1, "Organisation name is required"),
   organisation_address: z.string().max(255).optional(),
 });
@@ -55,7 +56,6 @@ export const MemberPrefillResponseSchema = z.object({
   email: z
     .string()
     .trim()
-    .min(1, "Email is required")
     .regex(/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/, "Invalid email address"),
 });
 
@@ -75,8 +75,7 @@ export const memberCompleteRegistrationSchema = z.object({
   user_mobile: z
     .string()
     .trim()
-    .min(3, "Mobile is required")
-    .regex(/^[0-9+\-\s()]{3,20}$/, "Invalid mobile format"),
+    .regex(/^(?:\+65|0065)?[89]\d{7}$/, "Invalid Singapore mobile number"),
 });
 
 export type MemberCompleteRegistration = z.infer<
@@ -99,7 +98,7 @@ export type MembersResponse = z.infer<typeof MembersResponseSchema>;
 
 export const MemberConfigSchema = z.object({
   email: z.email("Invalid email"),
-  roleIds: z.array(z.coerce.string()).nonempty("At least one role is required"),
+  roleIds: z.array(z.number()).nonempty("At least one role is required"),
   remark: z.string().trim().optional(),
 });
 export type MemberConfig = z.infer<typeof MemberConfigSchema>;

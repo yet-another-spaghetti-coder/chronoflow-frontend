@@ -22,13 +22,9 @@ import { useEffect, useState } from "react";
 
 type LoginCardProps = {
   onRegistrationSelection: () => void;
-  onForgotPassword: () => void;
 };
 
-export function LoginCard({
-  onRegistrationSelection,
-  onForgotPassword,
-}: LoginCardProps) {
+export function LoginCard({ onRegistrationSelection }: LoginCardProps) {
   const [showPwd, setShowPwd] = useState(false);
   const navigate = useNavigate();
 
@@ -119,13 +115,6 @@ export function LoginCard({
           <div className="grid gap-2">
             <div className="flex items-center justify-between">
               <Label htmlFor="password">Password</Label>
-              <button
-                type="button"
-                onClick={onForgotPassword}
-                className="text-sm underline-offset-4 hover:underline"
-              >
-                Forgot your password?
-              </button>
             </div>
             <div className="relative">
               <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />

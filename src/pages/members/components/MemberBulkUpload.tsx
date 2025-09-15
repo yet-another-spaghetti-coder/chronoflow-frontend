@@ -47,7 +47,6 @@ export default function BulkMemberUploadSheet({
 
     try {
       const res = await uploadMembersExcel(file);
-      console.log(res);
       setResult(res);
       setResultDialogOpen(true);
     } catch (e: any) {

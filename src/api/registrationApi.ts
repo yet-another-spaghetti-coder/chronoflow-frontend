@@ -32,12 +32,11 @@ export async function registerMember(
   input: MemberCompleteRegistration
 ): Promise<boolean> {
   const payload = {
-    userId: Number(input.user_id),
+    userId: input.user_id,
     username: input.user_name,
     password: input.user_password,
     phone: input.user_mobile,
   };
-
   const res = await http.post("/system/reg/member", payload);
   return unwrap<boolean>(res.data);
 }
