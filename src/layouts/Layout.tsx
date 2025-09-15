@@ -12,16 +12,34 @@ export default function AppLayout() {
       <div className="flex min-h-screen">
         <aside
           className={cn(
-            "relative z-[70] shrink-0 bg-card overflow-visible",
-            "transition-[width] duration-300 ease-in-out",
-            isOpen ? "w-60" : "w-[90px]"
+            "fixed inset-y-0 left-0 z-40 bg-card shadow-lg lg:relative lg:shadow-none",
+
+            "w-64 -translate-x-full transition-transform duration-300 ease-in-out",
+            isOpen && "translate-x-0",
+
+            "lg:translate-x-0 lg:overflow-visible",
+            "lg:transition-[width] lg:duration-300 lg:ease-in-out",
+            isOpen ? "lg:w-60" : "lg:w-[90px]"
           )}
+          aria-hidden={!isOpen ? true : undefined}
+          aria-label="Sidebar"
         >
           <Sidebar />
         </aside>
+
+        <div
+          className={cn(
+            "fixed inset-0 z-[60] bg-black/40 transition-opacity duration-200 lg:hidden",
+            isOpen
+              ? "opacity-100 pointer-events-auto"
+              : "opacity-0 pointer-events-none"
+          )}
+          aria-hidden
+        />
+
         <div className="relative z-0 flex min-w-0 grow flex-col">
           <Navbar brand="Chrono Flow First Customer" />
-          <div className="container mx-auto px-4 py-6">
+          <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6">
             <Outlet />
           </div>
         </div>

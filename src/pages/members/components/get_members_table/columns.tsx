@@ -15,7 +15,7 @@ export const MemberColumns = (
     header: "Action",
     cell: ({ row }) => {
       const member = row.original;
-      
+
       const onDelete = async () => {
         const result = await Swal.fire({
           title: "Delete member?",
@@ -61,6 +61,13 @@ export const MemberColumns = (
     },
     enableSorting: false,
     enableHiding: false,
+  },
+  {
+    accessorKey: "id",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="ID" />
+    ),
+    cell: ({ row }) => <div>{row.getValue("id") ?? ""}</div>,
   },
   {
     accessorKey: "name",

@@ -85,24 +85,21 @@ export type MemberCompleteRegistration = z.infer<
 
 //Member
 export const MemberSchema = z.object({
-  id: z.number(),
+  id: z.string(),
   name: z.string().nullable(),
   email: z.email("Invalid email"),
   phone: z.string().nullable(),
-  // roles: z.array(z.number()).nonempty("At least one role is required"), //to be changed later
-  roles: z.array(z.number()),
+  roles: z.array(z.string()),
   registered: z.boolean(),
 });
-
 export type Member = z.infer<typeof MemberSchema>;
-export const MembersResponseSchema = z.array(MemberSchema);
-export type MemberResponse = z.infer<typeof MembersResponseSchema>;
 
-//Single Member Config
+export const MembersResponseSchema = z.array(MemberSchema);
+export type MembersResponse = z.infer<typeof MembersResponseSchema>;
+
 export const MemberConfigSchema = z.object({
   email: z.email("Invalid email"),
-  roleIds: z.array(z.number()).nonempty("At least one role is required"),
+  roleIds: z.array(z.coerce.string()).nonempty("At least one role is required"),
   remark: z.string().trim().optional(),
 });
-
 export type MemberConfig = z.infer<typeof MemberConfigSchema>;

@@ -67,7 +67,7 @@ export default function MemberConfigFormSheet({
     if (isEdit && member) {
       form.reset({
         email: member.email,
-        roleIds: member.roles ?? [],
+        roleIds: member.roles ? member.roles.map((id) => Number(id)) : [],
         remark: "",
       });
     } else {

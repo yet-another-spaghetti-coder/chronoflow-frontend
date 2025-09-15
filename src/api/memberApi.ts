@@ -31,30 +31,29 @@ export async function uploadMembersExcel(
   }
 }
 
-export async function createMember(input: MemberConfig): Promise<number> {
+export async function createMember(input: MemberConfig) {
   const payload = {
     email: input.email,
     roleIds: input.roleIds,
     ...(input.remark ? { remark: input.remark } : {}),
   };
+
   const res = await http.post("/organizer/create/user", payload);
-  return unwrap<number>(res.data);
+  return unwrap(res.data);
 }
 
-export async function updateMember(
-  id: number,
-  input: MemberConfig
-): Promise<boolean> {
+export async function updateMember(id: string, input: MemberConfig) {
   const payload = {
     email: input.email,
     roleIds: input.roleIds,
     ...(input.remark ? { remark: input.remark } : {}),
   };
+
   const res = await http.patch(`/organizer/update/user/${id}`, payload);
-  return res.data;
+  return unwrap(res.data);
 }
 
-export async function deleteMember(id: number): Promise<boolean> {
+export async function deleteMember(id: string) {
   const res = await http.delete(`/organizer/delete/user/${id}`);
-  return res.data;
+  return unwrap(res.data);
 }

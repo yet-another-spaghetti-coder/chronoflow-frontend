@@ -1,5 +1,5 @@
 import { CalendarDays, type LucideIcon, UserLock, Users } from "lucide-react";
-import { useAuthStore } from "../stores/auth-store";
+import { useAuthStore } from "@/stores/auth-store";
 import { useEventStore } from "@/stores/event-store";
 import { hasAnyRole, normalizeRoles, type Role } from "./shared/role";
 
