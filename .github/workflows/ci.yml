@@ -52,11 +52,20 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@v4
-      - uses: returntocorp/semgrep-action@v1
+
+      - uses: actions/setup-python@v5
         with:
-          config: p/typescript
-          generateSarif: true
-          output: semgrep.sarif   # FIXED: correct key for SARIF output
+          python-version: '3.11'
+      - run: pipx install semgrep
+
+  
+      - name: Run Semgrep
+        run: |
+          semgrep --version
+          semgrep --config p/typescript --sarif --output semgrep.sarif
+          # add --error to fail job on any finding:
+          # semgrep --config p/typescript --sarif --output semgrep.sarif --error
+
       - name: Upload SARIF to GitHub Security tab
         uses: github/codeql-action/upload-sarif@v3
         with:
