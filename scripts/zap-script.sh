@@ -6,7 +6,9 @@ REPORT_FILE="zap_baseline_report.html"
 
 echo "Running OWASP ZAP Baseline Scan against $TARGET_URL"
 
-docker run --rm -v "$(pwd):/zap/wrk:rw" -t owasp/zap2docker-stable zap-baseline.py \
+docker pull owasp/zap2docker-stable:latest
+
+docker run --rm -v "$(pwd):/zap/wrk:rw" owasp/zap2docker-stable:latest zap-baseline.py \
   -t "$TARGET_URL" \
   -r "$REPORT_FILE" \
   -m 5 \

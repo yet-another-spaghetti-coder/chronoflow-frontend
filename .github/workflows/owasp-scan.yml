@@ -3,7 +3,7 @@ name: OWASP ZAP Scan
 on:
   workflow_dispatch:  
   push:
-    branches: [ test ] 
+    branches: [ test ]
 
 jobs:
   dast:
@@ -12,6 +12,9 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+
+      - name: Set script permission
+        run: chmod +x scripts/zap-script.sh
 
       - name: Run ZAP Baseline Scan
         run: scripts/zap-script.sh
