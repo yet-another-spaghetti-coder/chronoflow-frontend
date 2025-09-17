@@ -12,7 +12,7 @@
     "test": "vitest",
     "test:watch": "vitest",
     "test:ci": "vitest run --coverage --reporter=dot",
-    "sast": "semgrep --config p/typescript --error"
+    "sast": "semgrep --config p/typescript --config p/react --error"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.1",
