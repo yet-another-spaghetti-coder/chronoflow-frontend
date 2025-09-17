@@ -48,16 +48,15 @@ jobs:
     name: Static Application Security Testing (Semgrep)
     runs-on: ubuntu-latest
     permissions:
-      security-events: write  
+      security-events: write
       contents: read
     steps:
       - uses: actions/checkout@v4
       - uses: returntocorp/semgrep-action@v1
         with:
-          config: p/typescript     
+          config: p/typescript
           generateSarif: true
-          sarifFile: semgrep.sarif
-
+          output: semgrep.sarif   # FIXED: correct key for SARIF output
       - name: Upload SARIF to GitHub Security tab
         uses: github/codeql-action/upload-sarif@v3
         with:
@@ -80,10 +79,9 @@ jobs:
       - name: Fail on high/critical vulns
         run: |
           node -e "const r=require('./audit.json'); \
-            const advisories=(r.vulnerabilities||r.advisories||{}); \
             const counts=r.metadata?.vulnerabilities || r.metadata || {}; \
-            const high=(counts.high||0); const critical=(counts.critical||0); \
             console.log('Vulns:', counts); \
+            const high=(counts.high||0); const critical=(counts.critical||0); \
             if (high+critical>0) { console.error('Failing: high+critical =', high+critical); process.exit(1); }"
       - name: Upload audit.json artifact
         if: always()
@@ -91,4 +89,3 @@ jobs:
         with:
           name: npm-audit
           path: audit.json
-
