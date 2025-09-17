@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "lint": "eslint .",
+    "lint": "eslint --ext .ts,.tsx src --max-warnings=0 --format json -o eslint-report.json",
+    "lint:fix": "eslint --ext .ts,.tsx src --fix",
     "typecheck": "tsc --noEmit",
     "preview": "vite preview",
     "test": "vitest",
