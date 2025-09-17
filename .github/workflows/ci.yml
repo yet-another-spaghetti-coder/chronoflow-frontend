@@ -12,19 +12,19 @@ concurrency:
 
 jobs:
   typecheck:
-    name: TypeCheck
+    name: Type Check
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: npm
+          cache: 'npm'
       - run: npm ci
       - run: npm run typecheck
 
   test:
-    name: Tests
+    name: Unit & Integration Tests
     runs-on: ubuntu-latest
     env:
       CI: true
@@ -33,9 +33,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: npm
+          cache: 'npm'
       - run: npm ci
-      - name: Run Vitest (CI)
+      - name: Run Vitest
         run: npm run test:ci
       - name: Upload coverage artifact
         if: always()
@@ -44,14 +44,51 @@ jobs:
           name: coverage
           path: coverage/
 
-  # lint:
-  #   name: Lint
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #     - uses: actions/setup-node@v4
-  #       with:
-  #         node-version: 20
-  #         cache: npm
-  #     - run: npm ci
-  #     - run: npm run lint
+  sast:
+    name: Static Application Security Testing (Semgrep)
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write  
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: returntocorp/semgrep-action@v1
+        with:
+          config: p/typescript     
+          generateSarif: true
+          sarifFile: semgrep.sarif
+
+      - name: Upload SARIF to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: semgrep.sarif
+
+  sca:
+    name: Dependency Vulnerability Scan (npm audit)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+      - run: npm ci
+      - name: Run npm audit (JSON)
+        run: |
+          set -o pipefail
+          npm audit --json > audit.json || true
+      - name: Fail on high/critical vulns
+        run: |
+          node -e "const r=require('./audit.json'); \
+            const advisories=(r.vulnerabilities||r.advisories||{}); \
+            const counts=r.metadata?.vulnerabilities || r.metadata || {}; \
+            const high=(counts.high||0); const critical=(counts.critical||0); \
+            console.log('Vulns:', counts); \
+            if (high+critical>0) { console.error('Failing: high+critical =', high+critical); process.exit(1); }"
+      - name: Upload audit.json artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: npm-audit
+          path: audit.json
+
