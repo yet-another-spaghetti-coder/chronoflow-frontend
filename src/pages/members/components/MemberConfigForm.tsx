@@ -1,13 +1,14 @@
-import { useEffect, useState } from "react";
-import { useForm, FormProvider, Controller } from "react-hook-form";
+import { useEffect, useMemo, useState } from "react";
+import { FormProvider, Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
-  Sheet,
-  SheetContent,
-  SheetTitle,
-  SheetTrigger,
-  SheetDescription,
-} from "@/components/ui/sheet";
+  Dialog,
+  DialogTrigger,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -34,7 +35,6 @@ import {
 } from "@/lib/validation/schema";
 import { createMember, updateMember } from "@/api/memberApi";
 import Swal from "sweetalert2";
-import { useMemo } from "react";
 import type { RoleOption } from "@/services/role";
 
 type MemberConfigFormProps = {
@@ -43,7 +43,7 @@ type MemberConfigFormProps = {
   rolesOptions: RoleOption[];
 };
 
-export default function MemberConfigFormSheet({
+export default function MemberConfigFormModal({
   member,
   onRefresh,
   rolesOptions,
@@ -66,16 +66,18 @@ export default function MemberConfigFormSheet({
   } = form;
 
   useEffect(() => {
+    if (!open) return;
     if (isEdit && member) {
-      form.reset({
-        email: member.email,
-        roleIds: member.roles ?? [],
-        remark: "",
-      });
+      reset({ email: member.email, roleIds: member.roles ?? [], remark: "" });
     } else {
-      form.reset({ email: "", roleIds: [], remark: "" });
+      reset({ email: "", roleIds: [], remark: "" });
     }
-  }, [isEdit, member, open, form]);
+  }, [open, isEdit, member, reset]);
+
+  const roleIdToLabel = useMemo(
+    () => new Map(rolesOptions.map((o) => [o.id, o.label] as const)),
+    [rolesOptions]
+  );
 
   const onSubmit = handleSubmit(async (values: MemberConfig) => {
     try {
@@ -85,7 +87,6 @@ export default function MemberConfigFormSheet({
           icon: "success",
           title: "Member updated",
           text: "The member details have been updated successfully.",
-          confirmButtonText: "OK",
         });
       } else {
         await createMember(values);
@@ -93,178 +94,165 @@ export default function MemberConfigFormSheet({
           icon: "success",
           title: "Member created",
           text: "The member has been created successfully.",
-          confirmButtonText: "OK",
         });
       }
-
       reset({ email: "", roleIds: [], remark: "" });
       setOpen(false);
       onRefresh();
     } catch (err: unknown) {
-      const msg =
-        err instanceof Error
-          ? err.message
-          : "Operation failed. Please try again.";
       await Swal.fire({
         icon: "error",
         title: isEdit ? "Update failed" : "Creation failed",
-        text: msg,
-        confirmButtonText: "OK",
+        text:
+          err instanceof Error
+            ? err.message
+            : "Operation failed. Please try again.",
       });
+      setOpen(false);
     }
   });
 
-  const roleIdToLabel = useMemo(
-    () => new Map(rolesOptions.map((o) => [o.id, o.label] as const)),
-    [rolesOptions]
-  );
-
   return (
-    <Sheet
+    <Dialog
       open={open}
       onOpenChange={(v) => {
         setOpen(v);
         if (!v) reset({ email: "", roleIds: [], remark: "" });
       }}
     >
-      <SheetTrigger asChild>
+      <DialogTrigger asChild>
         <Button>{isEdit ? "Edit member" : "Create member"}</Button>
-      </SheetTrigger>
+      </DialogTrigger>
 
-      <SheetContent className="sm:max-w-md w-full overflow-auto">
-        <SheetTitle>{isEdit ? "Edit Member" : "Create Member"}</SheetTitle>
-        <SheetDescription className="mt-1">
-          {isEdit
-            ? "Update the member’s email, roles, or remark."
-            : "Add a single member by email and assign roles."}
-        </SheetDescription>
+      <DialogContent className="w-[92vw] sm:max-w-md p-0">
+        <DialogHeader className="px-6 pt-6 pb-4">
+          <DialogTitle>{isEdit ? "Edit Member" : "Create Member"}</DialogTitle>
+          <DialogDescription>
+            {isEdit
+              ? "Update the member’s email, roles, or remark."
+              : "Add a single member by email and assign roles."}
+          </DialogDescription>
+        </DialogHeader>
 
-        <FormProvider {...form}>
-          <form onSubmit={onSubmit} noValidate className="mt-5 grid gap-5">
-            {/* Email */}
-            <div className="grid gap-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="user@acme.com"
-                {...register("email")}
-                aria-invalid={!!errors.email}
-              />
-              <p className="h-5 text-sm leading-5 text-destructive">
-                {errors.email?.message ?? "\u00A0"}
-              </p>
-            </div>
+        <div className="max-h-[85dvh] overflow-y-auto px-6 pb-6">
+          <FormProvider {...form}>
+            <form onSubmit={onSubmit} noValidate className="grid gap-5">
+              {/* Email */}
+              <div className="grid gap-2">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="user@acme.com"
+                  {...register("email")}
+                  aria-invalid={!!errors.email}
+                />
+                <p className="h-5 text-sm text-destructive">
+                  {errors.email?.message ?? "\u00A0"}
+                </p>
+              </div>
 
-            {/* Roles (multi-select) */}
-            <div className="grid gap-2">
-              <Label>Roles</Label>
-              <Controller
-                name="roleIds"
-                control={control}
-                render={({ field }) => {
-                  const selected = new Set(field.value ?? []);
-                  const selectedLabels = (field.value ?? [])
-                    .map((id) => roleIdToLabel.get(id))
-                    .filter(Boolean) as string[];
+              {/* Roles */}
+              <div className="grid gap-2">
+                <Label>Roles</Label>
+                <Controller
+                  name="roleIds"
+                  control={control}
+                  render={({ field }) => {
+                    const selected = new Set(field.value ?? []);
+                    const labels = (field.value ?? [])
+                      .map((id) => roleIdToLabel.get(id))
+                      .filter(Boolean) as string[];
 
-                  return (
-                    <>
-                      <Popover open={rolesOpen} onOpenChange={setRolesOpen}>
-                        <PopoverTrigger asChild>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            className="justify-between w-full"
-                            disabled={rolesOptions.length === 0}
-                          >
-                            {selectedLabels.length > 0 ? (
-                              <div className="flex flex-wrap gap-1">
-                                {selectedLabels.map((lbl) => (
-                                  <Badge
-                                    key={lbl}
-                                    variant="secondary"
-                                    className="px-2 py-0.5"
-                                  >
-                                    {lbl}
-                                  </Badge>
-                                ))}
-                              </div>
-                            ) : (
-                              <span className="text-muted-foreground">
-                                {rolesOptions.length === 0
-                                  ? "No roles available"
-                                  : "Select roles…"}
-                              </span>
-                            )}
-                          </Button>
-                        </PopoverTrigger>
-
-                        <PopoverContent className="p-0 w-[--radix-popover-trigger-width]">
-                          <Command>
-                            <CommandInput placeholder="Search roles…" />
-                            <CommandList>
-                              <CommandEmpty>No roles found.</CommandEmpty>
-                              <CommandGroup>
-                                {rolesOptions.map((opt) => {
-                                  const checked = selected.has(opt.id);
-                                  return (
-                                    <CommandItem
-                                      key={opt.id}
-                                      value={opt.label}
-                                      onSelect={() => {
-                                        const next = new Set(field.value ?? []);
-                                        if (checked) next.delete(opt.id);
-                                        else next.add(opt.id);
-                                        field.onChange(Array.from(next));
-                                      }}
-                                      className="cursor-pointer"
+                    return (
+                      <>
+                        <Popover open={rolesOpen} onOpenChange={setRolesOpen}>
+                          <PopoverTrigger asChild>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              className="w-full justify-between"
+                              disabled={rolesOptions.length === 0}
+                            >
+                              {labels.length ? (
+                                <div className="flex flex-wrap gap-1">
+                                  {labels.map((lbl) => (
+                                    <Badge
+                                      key={lbl}
+                                      variant="secondary"
+                                      className="px-2 py-0.5"
                                     >
-                                      <Checkbox
-                                        checked={checked}
-                                        className="mr-2"
-                                        onCheckedChange={() => {
-                                          const next = new Set(
-                                            field.value ?? []
-                                          );
-                                          if (checked) next.delete(opt.id);
-                                          else next.add(opt.id);
-                                          field.onChange(Array.from(next));
-                                        }}
-                                      />
-                                      {opt.label}
-                                    </CommandItem>
-                                  );
-                                })}
-                              </CommandGroup>
-                            </CommandList>
-                          </Command>
-                        </PopoverContent>
-                      </Popover>
+                                      {lbl}
+                                    </Badge>
+                                  ))}
+                                </div>
+                              ) : (
+                                <span className="text-muted-foreground">
+                                  {rolesOptions.length === 0
+                                    ? "No roles available"
+                                    : "Select roles…"}
+                                </span>
+                              )}
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="p-0 w-[--radix-popover-trigger-width]">
+                            <Command>
+                              <CommandInput placeholder="Search roles…" />
+                              <CommandList>
+                                <CommandEmpty>No roles found.</CommandEmpty>
+                                <CommandGroup>
+                                  {rolesOptions.map((opt) => {
+                                    const checked = selected.has(opt.id);
+                                    const toggle = () => {
+                                      const next = new Set(field.value ?? []);
+                                      checked
+                                        ? next.delete(opt.id)
+                                        : next.add(opt.id);
+                                      field.onChange(Array.from(next));
+                                    };
+                                    return (
+                                      <CommandItem
+                                        key={opt.id}
+                                        value={opt.label}
+                                        onSelect={toggle}
+                                        className="cursor-pointer"
+                                      >
+                                        <Checkbox
+                                          checked={checked}
+                                          className="mr-2"
+                                          onCheckedChange={toggle}
+                                        />
+                                        {opt.label}
+                                      </CommandItem>
+                                    );
+                                  })}
+                                </CommandGroup>
+                              </CommandList>
+                            </Command>
+                          </PopoverContent>
+                        </Popover>
+                        <p className="h-5 text-sm text-destructive">
+                          {errors.roleIds?.message ?? "\u00A0"}
+                        </p>
+                      </>
+                    );
+                  }}
+                />
+              </div>
 
-                      <p className="h-5 text-sm leading-5 text-destructive">
-                        {errors.roleIds?.message ?? "\u00A0"}
-                      </p>
-                    </>
-                  );
-                }}
-              />
-            </div>
+              {/* Remark */}
+              <div className="grid gap-2">
+                <Label htmlFor="remark">Remark (optional)</Label>
+                <Input
+                  id="remark"
+                  placeholder="e.g. Invited by Alice"
+                  {...register("remark")}
+                />
+                <p className="h-5 text-sm text-destructive">
+                  {errors.remark?.message ?? "\u00A0"}
+                </p>
+              </div>
 
-            {/* Remark (optional) */}
-            <div className="grid gap-2">
-              <Label htmlFor="remark">Remark (optional)</Label>
-              <Input
-                id="remark"
-                placeholder="e.g. Invited by Alice"
-                {...register("remark")}
-              />
-              <p className="h-5 text-sm leading-5 text-destructive">
-                {errors.remark?.message ?? "\u00A0"}
-              </p>
-            </div>
-
-            <div className="flex justify-center">
               <Button
                 type="submit"
                 className={cn("h-11 w-full")}
@@ -278,10 +266,10 @@ export default function MemberConfigFormSheet({
                   ? "Creating…"
                   : "Create member"}
               </Button>
-            </div>
-          </form>
-        </FormProvider>
-      </SheetContent>
-    </Sheet>
+            </form>
+          </FormProvider>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
