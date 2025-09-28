@@ -5,6 +5,7 @@ import RequireAuth from "@/components/auth/require-auth";
 import RootPage from "@/pages/Root";
 import LoginPage from "@/pages/login";
 import MembersPage from "@/pages/members";
+import OrgEventsPage from "@/pages/events";
 
 const router = createBrowserRouter([
   {
@@ -20,6 +21,7 @@ const router = createBrowserRouter([
         children: [
           { index: true, element: <RootPage /> },
           { path: "members", element: <MembersPage /> },
+          { path: "events", element: <OrgEventsPage /> },
         ],
       },
     ],

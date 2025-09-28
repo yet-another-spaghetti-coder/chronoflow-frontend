@@ -102,3 +102,38 @@ export const MemberConfigSchema = z.object({
   remark: z.string().trim().optional(),
 });
 export type MemberConfig = z.infer<typeof MemberConfigSchema>;
+
+//events
+export const OrgEventSchema = z
+  .object({
+    id: z.string(),
+    name: z.string(),
+    description: z.string().nullable().optional(),
+    location: z.string().nullable().optional(),
+    status: z.number().int(),
+    startTime: z.coerce.date(),
+    endTime: z.coerce.date(),
+    remark: z.string().nullable().optional(),
+    joiningParticipants: z.number().int().nonnegative().default(0),
+    groups: z
+      .array(
+        z.object({
+          id: z.string(),
+          name: z.string().nullable(),
+        })
+      )
+      .optional()
+      .default([]),
+    taskStatus: z.object({
+      total: z.number().int().nonnegative(),
+      remaining: z.number().int().nonnegative(),
+      completed: z.number().int().nonnegative(),
+    }),
+  })
+  .refine((data) => data.endTime.getTime() >= data.startTime.getTime(), {
+    message: "End time cannot be earlier than start time",
+    path: ["endTime"],
+  });
+
+export type OrgEvent = z.infer<typeof OrgEventSchema>;
+export const OrgEventsResponseSchema = z.array(OrgEventSchema);

@@ -1,7 +1,7 @@
 import { DataTableLoading } from "@/components/data-table/data-table-skeleton";
 import { Card, CardContent } from "@/components/ui/card";
-import MembersTable from "./components/get-member-team/data-table";
-import { MemberColumns } from "./components/get-member-team/columns";
+import MembersTable from "./components/get-member-table/data-table";
+import { MemberColumns } from "./components/get-member-table/columns";
 import { useMembers } from "../../hooks/members/userMember";
 import { useSystemRoles } from "@/hooks/roles/useSystemRoles";
 import { useMemo } from "react";
