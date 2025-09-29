@@ -1,5 +1,11 @@
-import { CalendarDays, type LucideIcon, UserLock, Users } from "lucide-react";
-import { useAuthStore } from "@/stores/authStore";
+import {
+  CalendarDays,
+  Users,
+  UserLock,
+  LayoutDashboard,
+  ListChecks,
+  type LucideIcon,
+} from "lucide-react";
 
 export type Submenu = { href: string; label: string; active: boolean };
 export type Menu = {
@@ -11,67 +17,83 @@ export type Menu = {
 };
 export type Group = { groupLabel: string; menus: Menu[] };
 
-export function getMenuList(pathname: string): Group[] {
-  const { user } = useAuthStore.getState();
+export function getMenuList(
+  pathname: string,
+  opts: { hasUser: boolean; selectedEventId: string | null }
+): Group[] {
+  const { hasUser, selectedEventId } = opts;
+  if (!hasUser) return [];
 
-  if (!user) {
-    return [];
+  if (!selectedEventId) {
+    return [
+      {
+        groupLabel: "Event Administration",
+        menus: [
+          {
+            href: "/events",
+            label: "Events",
+            active: pathname === "/events",
+            submenus: [],
+            icon: CalendarDays,
+          },
+        ],
+      },
+      {
+        groupLabel: "Member Administration",
+        menus: [
+          {
+            href: "/members",
+            label: "Members",
+            active: pathname === "/members",
+            submenus: [],
+            icon: Users,
+          },
+          {
+            href: "/roles",
+            label: "Roles",
+            active: pathname === "/roles",
+            submenus: [],
+            icon: UserLock,
+          },
+        ],
+      },
+    ];
   }
+
+  const specificEventBase = `/event/${selectedEventId}`;
+  const specificDashboardPath = `${specificEventBase}/dashboard`;
+  const specificGroupPath = `${specificEventBase}/groups`;
+  const specificTaskPath = `${specificEventBase}/tasks`;
 
   return [
     {
-      groupLabel: "Event Administration ",
+      groupLabel: "Event Dashboard",
       menus: [
         {
-          href: "/events",
-          label: "Event",
-          active: pathname === "/events",
+          href: `${specificEventBase}/dashboard`,
+          label: "Overview",
+          active: pathname === specificDashboardPath,
           submenus: [],
-          icon: CalendarDays,
+          icon: LayoutDashboard,
         },
       ],
     },
     {
-      groupLabel: "Member Administration ",
+      groupLabel: "Event Management",
       menus: [
         {
-          href: "/members",
-          label: "Member",
-          active: pathname === "/members",
+          href: `${specificEventBase}/groups`,
+          label: "Groups",
+          active: pathname === specificGroupPath,
           submenus: [],
           icon: Users,
         },
         {
-          href: "/roles",
-          label: "Role",
-          active: pathname === "/roles",
+          href: `${specificEventBase}/tasks`,
+          label: "Tasks",
+          active: pathname === specificTaskPath,
           submenus: [],
-          icon: UserLock,
-        },
-      ],
-    },
-
-    {
-      groupLabel: "Chosen E Member",
-      menus: [
-        {
-          href: "/event/members",
-          label: "Member",
-          active: pathname === "/event/members",
-          submenus: [],
-          icon: Users,
-        },
-      ],
-    },
-    {
-      groupLabel: "Chosen E Group",
-      menus: [
-        {
-          href: "/event/groups",
-          label: "Group",
-          active: pathname === "/event/groups",
-          submenus: [],
-          icon: Users,
+          icon: ListChecks,
         },
       ],
     },

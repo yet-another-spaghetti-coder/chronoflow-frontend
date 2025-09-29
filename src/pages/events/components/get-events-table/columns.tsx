@@ -14,6 +14,7 @@ import {
   type EventStatusCode,
 } from "@/services/event";
 import { cn } from "@/lib/utils";
+import { GoToEventButton } from "../GoToEventButton";
 
 export function StatusBadge({ status }: { status: EventStatusCode }) {
   const label = getEventStatusText(status);
@@ -31,60 +32,66 @@ export function StatusBadge({ status }: { status: EventStatusCode }) {
   );
 }
 
+function ActionCell({
+  ev,
+  onRefresh,
+}: {
+  ev: OrgEvent;
+  onRefresh: () => void | Promise<void>;
+}) {
+  const onDelete = async () => {
+    const result = await Swal.fire({
+      title: "Delete event?",
+      html: `This will remove <b>${ev.name}</b>.`,
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Yes, delete",
+      cancelButtonText: "Cancel",
+      reverseButtons: true,
+      focusCancel: true,
+    });
+    if (!result.isConfirmed) return;
+
+    try {
+      await deleteEvent(ev.id);
+      await Swal.fire({
+        icon: "success",
+        title: "Deleted",
+        text: "The event has been deleted.",
+        confirmButtonText: "OK",
+      });
+      await onRefresh?.();
+    } catch (err: unknown) {
+      await Swal.fire({
+        icon: "error",
+        title: "Delete failed",
+        text:
+          err instanceof Error
+            ? err.message
+            : "Unable to delete the event. Please try again.",
+        confirmButtonText: "OK",
+      });
+    }
+  };
+
+  return (
+    <div className="flex gap-2">
+      <GoToEventButton id={ev.id} />
+      <Button size="sm" variant="destructive" onClick={onDelete}>
+        Delete
+      </Button>
+      <EventConfigFormModal event={ev} onRefresh={onRefresh} />
+    </div>
+  );
+}
+
 export const OrgEventColumns = (
   onRefresh: () => Promise<void> | void
 ): ColumnDef<OrgEvent>[] => [
   {
     id: "actions",
     header: "Action",
-    cell: ({ row }) => {
-      const ev = row.original;
-
-      const onDelete = async () => {
-        const result = await Swal.fire({
-          title: "Delete event?",
-          html: `This will remove <b>${ev.name}</b>.`,
-          icon: "warning",
-          showCancelButton: true,
-          confirmButtonText: "Yes, delete",
-          cancelButtonText: "Cancel",
-          reverseButtons: true,
-          focusCancel: true,
-        });
-        if (!result.isConfirmed) return;
-
-        try {
-          await deleteEvent(ev.id);
-          await Swal.fire({
-            icon: "success",
-            title: "Deleted",
-            text: "The event has been deleted.",
-            confirmButtonText: "OK",
-          });
-          await onRefresh?.();
-        } catch (err: unknown) {
-          const msg =
-            err instanceof Error
-              ? err.message
-              : "Unable to delete the event. Please try again.";
-          await Swal.fire({
-            icon: "error",
-            title: "Delete failed",
-            text: msg,
-            confirmButtonText: "OK",
-          });
-        }
-      };
-
-      return (
-        <div className="flex gap-2">
-          <Button size="sm" variant="destructive" onClick={onDelete}>
-            Delete
-          </Button>
-          <EventConfigFormModal event={ev} onRefresh={onRefresh} />
-        </div>
-      );
-    },
+    cell: ({ row }) => <ActionCell ev={row.original} onRefresh={onRefresh} />,
     enableSorting: false,
     enableHiding: false,
   },
