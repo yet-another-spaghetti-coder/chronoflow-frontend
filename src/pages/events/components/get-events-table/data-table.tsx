@@ -13,7 +13,6 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { ExportExcel } from "@/components/export-excel";
 import {
   Table,
   TableBody,
@@ -22,26 +21,19 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-
 import { DataTableToolbar } from "@/components/data-table/data-table-toolbar";
 import { DataTablePagination } from "@/components/data-table/data-table-pagination";
-import { type Member } from "@/lib/validation/schema";
-import {
-  mapOrgMemberRoleIdsToKeys,
-  orgMemberRoleFilterOptions,
-} from "@/lib/shared/role";
-import { registeredFilterOptions } from "@/lib/shared/member";
-import BulkMemberUploadSheet from "../MemberBulkUpload";
-import CreateMemberSheet from "../MemberConfigForm";
-import { useMemo } from "react";
+import type { OrgEvent } from "@/lib/validation/schema";
+import { eventStatusFilterOptions } from "@/services/event";
+import EventConfigForm from "../EventConfigForm";
 
 type MembersTableProps = {
-  columns: ColumnDef<Member, unknown>[];
-  data: Member[];
+  columns: ColumnDef<OrgEvent, unknown>[];
+  data: OrgEvent[];
   onRefresh: () => void;
 };
 
-export default function MembersTable({
+export default function OrgEventTable({
   columns,
   data,
   onRefresh,
@@ -73,49 +65,23 @@ export default function MembersTable({
     enableRowSelection: true,
   });
 
-  const allTableData = useMemo(() => {
-    return table.getFilteredRowModel().rows.map((row) => row.original);
-  }, [table]);
-
-  const excelExportData = useMemo(() => {
-    return allTableData.map((item) => ({
-      Name: item.name,
-      Email: item.email,
-      Phone: item.phone,
-      Roles: mapOrgMemberRoleIdsToKeys(item.roles).join(", "),
-      Registered: item.registered ? "Yes" : "No",
-    }));
-  }, [allTableData]);
-
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center flex-wrap gap-4 mb-4">
         <DataTableToolbar
           table={table}
-          searchColumn={[]}
+          searchColumn={["name"]}
           filterColumn={[
             {
-              column: "role_keys",
-              option: orgMemberRoleFilterOptions(),
-              title: "Role",
-              searchParams: true,
-            },
-            {
-              column: "registered",
-              option: registeredFilterOptions(),
-              title: "Registeration",
+              column: "status",
+              option: eventStatusFilterOptions(),
+              title: "Status",
               searchParams: true,
             },
           ]}
           buttonRight={
             <div className="flex items-center gap-2">
-              <ExportExcel
-                jsonData={excelExportData}
-                fileName={"members"}
-                loading={false}
-              />
-              <BulkMemberUploadSheet onRefresh={onRefresh} />
-              <CreateMemberSheet onRefresh={onRefresh} />
+              <EventConfigForm onRefresh={onRefresh} />
             </div>
           }
         />
