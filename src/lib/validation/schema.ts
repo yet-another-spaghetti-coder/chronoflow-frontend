@@ -163,11 +163,13 @@ export const EventConfigSchema = z
 
 export type EventConfig = z.infer<typeof EventConfigSchema>;
 
+//Roles
 export const rolePermissionSchema = z.object({
   id: z.string(),
   name: z.string(),
   key: z.string(),
 });
+export type RolePermission = z.infer<typeof rolePermissionSchema>;
 
 export const roleSchema = z.object({
   id: z.string(),
@@ -175,13 +177,24 @@ export const roleSchema = z.object({
   key: z.string(),
   permissions: z.array(rolePermissionSchema).nullable(),
 });
+export type Role = z.infer<typeof roleSchema>;
+export const roleResponseSchema = z.array(roleSchema);
 
-export const roleListResponseSchema = z.object({
-  code: z.number(),
-  msg: z.string().optional(),
-  data: z.array(roleSchema),
+//Permissions
+export const permissionSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  key: z.string(),
+  description: z.string().optional(),
+});
+export type Permission = z.infer<typeof permissionSchema>;
+export const permissionResponseSchema = z.array(permissionSchema);
+export type PermissionListResponse = z.infer<typeof permissionResponseSchema>;
+
+export const permissionConfigSchema = z.object({
+  name: z.string().trim().min(1, "Permission name is required"),
+  key: z.string().trim().min(1, "Permission key is required"),
+  description: z.string().trim().optional(),
 });
 
-export type RolePermission = z.infer<typeof rolePermissionSchema>;
-export type Role = z.infer<typeof roleSchema>;
-export type RoleListResponse = z.infer<typeof roleListResponseSchema>;
+export type PermissionConfig = z.infer<typeof permissionConfigSchema>;

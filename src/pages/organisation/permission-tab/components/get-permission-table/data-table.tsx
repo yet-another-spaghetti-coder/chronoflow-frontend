@@ -23,20 +23,20 @@ import {
 } from "@/components/ui/table";
 import { DataTableToolbar } from "@/components/data-table/data-table-toolbar";
 import { DataTablePagination } from "@/components/data-table/data-table-pagination";
-import type { Role } from "@/lib/validation/schema";
-import { getDropDownValues } from "@/lib/utils";
+import type { Permission } from "@/lib/validation/schema";
+import PermissionConfigFormModal from "../PermissionConfigForm";
 
-type RoleTableProps = {
-  columns: ColumnDef<Role, unknown>[];
-  data: Role[];
+type PermissionTableProps = {
+  columns: ColumnDef<Permission, unknown>[];
+  data: Permission[];
   onRefresh: () => void | Promise<void>;
 };
 
-export default function RoleTable({
+export default function PermissionTable({
   columns,
   data,
   onRefresh,
-}: RoleTableProps) {
+}: PermissionTableProps) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     []
@@ -46,15 +46,6 @@ export default function RoleTable({
   const [rowSelection, setRowSelection] = React.useState<
     Record<string, boolean>
   >({});
-
-  const permissionOptions = React.useMemo(() => {
-    const set = new Set<string>();
-    for (const r of data) {
-      for (const p of r.permissions ?? []) set.add(p.key);
-    }
-    const asObjects = Array.from(set).map((k) => ({ label: k }));
-    return getDropDownValues(asObjects, "label");
-  }, [data]);
 
   const table = useReactTable({
     data,
@@ -78,16 +69,13 @@ export default function RoleTable({
       <div className="flex justify-between items-center flex-wrap gap-4 mb-4">
         <DataTableToolbar
           table={table}
-          searchColumn={["name", "key"]}
-          filterColumn={[
-            {
-              column: "perm_keys",
-              option: permissionOptions,
-              title: "Permission",
-              searchParams: true,
-            },
-          ]}
-          // buttonRight: (add later for "+ New Role", export, etc.)
+          searchColumn={[]}
+          filterColumn={[]}
+          buttonRight={
+            <div className="flex items-center gap-2">
+              <PermissionConfigFormModal onRefresh={onRefresh} />
+            </div>
+          }
         />
       </div>
 

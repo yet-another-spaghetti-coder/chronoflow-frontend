@@ -2,6 +2,7 @@ import { useState, useMemo } from "react";
 import DynamicTabs, { type TabItem } from "@/components/ui/dynamic-tabs";
 import MembersTab from "./member-tab";
 import RoleTab from "./role-tab";
+import PermissionTab from "./permission-tab";
 
 export default function OrganisationPage() {
   const [active, setActive] = useState<"members" | "roles" | "permissions">(
@@ -23,7 +24,7 @@ export default function OrganisationPage() {
       {
         label: "Permission Management",
         value: "permissions",
-        component: <p>Permission tab</p>,
+        component: <PermissionTab autoFetch={active === "permissions"} />,
       },
     ],
     [active]
