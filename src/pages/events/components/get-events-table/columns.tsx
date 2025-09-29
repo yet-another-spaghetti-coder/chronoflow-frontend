@@ -4,8 +4,104 @@ import type { OrgEvent } from "@/lib/validation/schema";
 import { DateTimeView } from "../DateTimeView";
 import TaskSummaryBox from "../TaskSummaryBox";
 import { GroupPeek } from "../GroupPeek";
+import { Button } from "@/components/ui/button";
+import Swal from "sweetalert2";
+import { deleteEvent } from "@/api/eventApi";
+import EventConfigFormModal from "../EventConfigForm";
+import {
+  getEventStatusStyles,
+  getEventStatusText,
+  type EventStatusCode,
+} from "@/services/event";
+import { cn } from "@/lib/utils";
 
-export const OrgEventColumns = (): ColumnDef<OrgEvent>[] => [
+export function StatusBadge({ status }: { status: EventStatusCode }) {
+  const label = getEventStatusText(status);
+  const { badge } = getEventStatusStyles(status);
+
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ring-1 ring-inset",
+        badge
+      )}
+    >
+      {label}
+    </span>
+  );
+}
+
+export const OrgEventColumns = (
+  onRefresh: () => Promise<void> | void
+): ColumnDef<OrgEvent>[] => [
+  {
+    id: "actions",
+    header: "Action",
+    cell: ({ row }) => {
+      const ev = row.original;
+
+      const onDelete = async () => {
+        const result = await Swal.fire({
+          title: "Delete event?",
+          html: `This will remove <b>${ev.name}</b>.`,
+          icon: "warning",
+          showCancelButton: true,
+          confirmButtonText: "Yes, delete",
+          cancelButtonText: "Cancel",
+          reverseButtons: true,
+          focusCancel: true,
+        });
+        if (!result.isConfirmed) return;
+
+        try {
+          await deleteEvent(ev.id);
+          await Swal.fire({
+            icon: "success",
+            title: "Deleted",
+            text: "The event has been deleted.",
+            confirmButtonText: "OK",
+          });
+          await onRefresh?.();
+        } catch (err: unknown) {
+          const msg =
+            err instanceof Error
+              ? err.message
+              : "Unable to delete the event. Please try again.";
+          await Swal.fire({
+            icon: "error",
+            title: "Delete failed",
+            text: msg,
+            confirmButtonText: "OK",
+          });
+        }
+      };
+
+      return (
+        <div className="flex gap-2">
+          <Button size="sm" variant="destructive" onClick={onDelete}>
+            Delete
+          </Button>
+          <EventConfigFormModal event={ev} onRefresh={onRefresh} />
+        </div>
+      );
+    },
+    enableSorting: false,
+    enableHiding: false,
+  },
+  {
+    accessorKey: "status",
+    header: ({ column }) => (
+      <div className="flex justify-center w-full">
+        <DataTableColumnHeader column={column} title="Status" />
+      </div>
+    ),
+    cell: ({ row }) => (
+      <div className="flex justify-center">
+        <StatusBadge status={row.getValue("status")} />
+      </div>
+    ),
+    filterFn: (row, id, value) => String(row.getValue(id)) === String(value),
+  },
   {
     accessorKey: "name",
     header: ({ column }) => (

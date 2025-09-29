@@ -1,44 +1,44 @@
 import { http } from "@/lib/http";
 import { unwrap } from "@/lib/utils";
-import { OrgEventsResponseSchema, type OrgEvent } from "@/lib/validation/schema";
-
-// export async function getEvents(): Promise<OrgEvent[]> {
-//   const res = await http.get("/system/events");
-//   const raw = unwrap<OrgEvent[]>(res.data);
-//   return OrgEventsResponseSchema.parse(raw);
-// }
+import {
+  OrgEventsResponseSchema,
+  type EventConfig,
+  type OrgEvent,
+} from "@/lib/validation/schema";
 
 export async function getEvents(): Promise<OrgEvent[]> {
   const res = await http.get("/system/events");
   const raw = unwrap<OrgEvent[]>(res.data);
+  return OrgEventsResponseSchema.parse(raw);
+}
 
-  // --- inject demo record ---
-  const demo: OrgEvent = {
-    id: "demo_001",
-    name: "Demo Event with 5 Groups",
-    description: "This is a fake record injected client-side.",
-    location: "Virtual",
-    status: 1,
-     startTime: new Date(),                               // <-- Date object
-  endTime: new Date(Date.now() + 2 * 60 * 60 * 1000),  // <-- Date object
-    remark: "Testing group rendering",
-    joiningParticipants: 42,
-    groups: [
-      { id: "grp1", name: "Logistics" },
-      { id: "grp2", name: "Content" },
-      { id: "grp3", name: "Registration" },
-      { id: "grp4", name: "Marketing" },
-      { id: "grp5", name: "Finance" },
-    ],
-    taskStatus: {
-      total: 10,
-      completed: 7,
-      remaining: 3,
-    },
+const toUtcNoMillis = (d: Date) => d.toISOString().replace(/\.\d{3}Z$/, "Z");
+const formatForApi = (d: Date) => toUtcNoMillis(d);
+const toPayload = (input: EventConfig) => {
+  if (!input.startTime || !input.endTime) {
+    throw new Error("Start time and end time are required");
+  }
+  return {
+    name: input.name,
+    description: input.description ?? undefined,
+    location: input.location,
+    startTime: formatForApi(input.startTime),
+    endTime: formatForApi(input.endTime),
+    ...(input.remark ? { remark: input.remark } : {}),
   };
+};
 
-  // put demo at the top of the list
-  const withDemo = [demo, ...raw];
+export async function createEvent(input: EventConfig) {
+  const res = await http.post("/system/events", toPayload(input));
+  return unwrap(res.data);
+}
 
-  return OrgEventsResponseSchema.parse(withDemo);
+export async function updateEvent(id: string, input: EventConfig) {
+  const res = await http.patch(`/system/events/${id}`, toPayload(input));
+  return unwrap(res.data);
+}
+
+export async function deleteEvent(id: string) {
+  const res = await http.delete(`/system/events/${id}`);
+  return unwrap(res.data);
 }

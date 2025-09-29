@@ -13,7 +13,10 @@ export default function OrgEventsPage() {
     onRefresh: onEventsRefresh,
   } = useOrgEvents(true);
 
-  const columns = useMemo(() => OrgEventColumns(), [onEventsRefresh]);
+  const columns = useMemo(
+    () => OrgEventColumns(onEventsRefresh),
+    [onEventsRefresh]
+  );
 
   return (
     <Card className="rounded-lg border-none">
@@ -29,7 +32,11 @@ export default function OrgEventsPage() {
         ) : (
           <div className="overflow-x-auto">
             <div className="min-w-[1000px]">
-              <OrgEventTable columns={columns} data={events} />
+              <OrgEventTable
+                columns={columns}
+                data={events}
+                onRefresh={onEventsRefresh}
+              />
             </div>
           </div>
         )}

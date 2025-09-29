@@ -94,7 +94,7 @@ export default function MembersTable({
       <div className="flex justify-between items-center flex-wrap gap-4 mb-4">
         <DataTableToolbar
           table={table}
-          searchColumn={[]}
+          searchColumn={["email"]}
           filterColumn={[
             {
               column: "registered",

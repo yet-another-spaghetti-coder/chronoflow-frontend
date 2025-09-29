@@ -81,25 +81,25 @@ export default function MemberConfigFormModal({
 
   const onSubmit = handleSubmit(async (values: MemberConfig) => {
     try {
+      let title = "";
+      let text = "";
+
       if (isEdit && member) {
         await updateMember(member.id, values);
-        await Swal.fire({
-          icon: "success",
-          title: "Member updated",
-          text: "The member details have been updated successfully.",
-        });
+        title = "Member updated";
+        text = "The member details have been updated successfully.";
       } else {
         await createMember(values);
-        await Swal.fire({
-          icon: "success",
-          title: "Member created",
-          text: "The member has been created successfully.",
-        });
+        title = "Member created";
+        text = "The member has been created successfully.";
       }
+
       reset({ email: "", roleIds: [], remark: "" });
       setOpen(false);
+      await Swal.fire({ icon: "success", title, text });
       onRefresh();
     } catch (err: unknown) {
+      setOpen(false);
       await Swal.fire({
         icon: "error",
         title: isEdit ? "Update failed" : "Creation failed",
@@ -108,7 +108,6 @@ export default function MemberConfigFormModal({
             ? err.message
             : "Operation failed. Please try again.",
       });
-      setOpen(false);
     }
   });
 

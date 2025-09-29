@@ -25,25 +25,22 @@ export async function uploadMembersExcel(
   return unwrap<MemberBulkUpsertResult>(res.data);
 }
 
-export async function createMember(input: MemberConfig) {
-  const payload = {
-    email: input.email,
-    roleIds: input.roleIds,
-    ...(input.remark ? { remark: input.remark } : {}),
-  };
+const toPayload = (input: MemberConfig) => ({
+  email: input.email,
+  roleIds: input.roleIds,
+  ...(input.remark ? { remark: input.remark } : {}),
+});
 
-  const res = await http.post("/organizer/create/user", payload);
+export async function createMember(input: MemberConfig) {
+  const res = await http.post("/organizer/create/user", toPayload(input));
   return unwrap(res.data);
 }
 
 export async function updateMember(id: string, input: MemberConfig) {
-  const payload = {
-    email: input.email,
-    roleIds: input.roleIds,
-    ...(input.remark ? { remark: input.remark } : {}),
-  };
-
-  const res = await http.patch(`/organizer/update/user/${id}`, payload);
+  const res = await http.patch(
+    `/organizer/update/user/${id}`,
+    toPayload(input)
+  );
   return unwrap(res.data);
 }
 

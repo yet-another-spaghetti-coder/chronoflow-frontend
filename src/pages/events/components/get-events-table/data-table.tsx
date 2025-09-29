@@ -24,13 +24,20 @@ import {
 import { DataTableToolbar } from "@/components/data-table/data-table-toolbar";
 import { DataTablePagination } from "@/components/data-table/data-table-pagination";
 import type { OrgEvent } from "@/lib/validation/schema";
+import { eventStatusFilterOptions } from "@/services/event";
+import EventConfigForm from "../EventConfigForm";
 
 type MembersTableProps = {
   columns: ColumnDef<OrgEvent, unknown>[];
   data: OrgEvent[];
+  onRefresh: () => void;
 };
 
-export default function OrgEventTable({ columns, data }: MembersTableProps) {
+export default function OrgEventTable({
+  columns,
+  data,
+  onRefresh,
+}: MembersTableProps) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     []
@@ -61,7 +68,23 @@ export default function OrgEventTable({ columns, data }: MembersTableProps) {
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center flex-wrap gap-4 mb-4">
-        <DataTableToolbar table={table} searchColumn={[]} filterColumn={[]} />
+        <DataTableToolbar
+          table={table}
+          searchColumn={["name"]}
+          filterColumn={[
+            {
+              column: "status",
+              option: eventStatusFilterOptions(),
+              title: "Status",
+              searchParams: true,
+            },
+          ]}
+          buttonRight={
+            <div className="flex items-center gap-2">
+              <EventConfigForm onRefresh={onRefresh} />
+            </div>
+          }
+        />
       </div>
 
       <div className="rounded-md border overflow-x-auto">

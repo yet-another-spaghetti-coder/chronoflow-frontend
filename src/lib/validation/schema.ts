@@ -111,7 +111,7 @@ export const OrgEventSchema = z
     location: z.string().nullable().optional(),
     status: z.number().int(),
     startTime: z.coerce.date(),
-    endTime: z.coerce.date(),
+    endTime: z.coerce.date().nullable().optional(),
     remark: z.string().nullable().optional(),
     joiningParticipants: z.number().int().nonnegative().default(0),
     groups: z
@@ -129,10 +129,36 @@ export const OrgEventSchema = z
       completed: z.number().int().nonnegative(),
     }),
   })
-  .refine((data) => data.endTime.getTime() >= data.startTime.getTime(), {
-    message: "End time cannot be earlier than start time",
-    path: ["endTime"],
-  });
+  .refine(
+    (data) =>
+      data.endTime == null ||
+      data.endTime.getTime() >= data.startTime.getTime(),
+    {
+      message: "End time cannot be earlier than start time",
+      path: ["endTime"],
+    }
+  );
 
 export type OrgEvent = z.infer<typeof OrgEventSchema>;
 export const OrgEventsResponseSchema = z.array(OrgEventSchema);
+
+export const EventConfigSchema = z
+  .object({
+    name: z.string().trim().min(1, "Event name is required"),
+    description: z.string().trim().optional().nullable(),
+    location: z.string().trim().min(1, "Location is required"),
+    startTime: z.date(),
+    endTime: z.date(),
+    remark: z.string().trim().optional().nullable(),
+  })
+  .superRefine(({ startTime, endTime }, ctx) => {
+    if (endTime.getTime() < startTime.getTime()) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["endTime"],
+        message: "End time cannot be earlier than start time",
+      });
+    }
+  });
+
+export type EventConfig = z.infer<typeof EventConfigSchema>;
