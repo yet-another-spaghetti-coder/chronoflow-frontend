@@ -40,7 +40,11 @@ export default function DynamicTabs({
   const currentTab = selectedTab ?? internalTab ?? safeDefault;
 
   const handleChange = (val: string) => {
-    onTabChange ? onTabChange(val) : setInternalTab(val);
+    if (onTabChange) {
+      onTabChange(val);
+    } else {
+      setInternalTab(val);
+    }
   };
 
   return (
