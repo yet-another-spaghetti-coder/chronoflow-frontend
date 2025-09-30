@@ -4,6 +4,7 @@ import { DataTableLoading } from "@/components/data-table/data-table-skeleton";
 import { useSystemRoles } from "@/hooks/roles/useSystemRoles";
 import RoleTable from "./components/get-role-table/data-table";
 import { RoleColumns } from "./components/get-role-table/columns";
+import { usePermissions } from "@/hooks/permissions/usePermission";
 
 export default function RoleTab({
   autoFetch = false,
@@ -17,7 +18,14 @@ export default function RoleTab({
     refresh: onRolesRefresh,
   } = useSystemRoles(autoFetch);
 
-  const columns = useMemo(() => RoleColumns(onRolesRefresh), [onRolesRefresh]);
+  const { permissions } = usePermissions(autoFetch);
+
+  console.log("Permissions in RoleTab:", permissions);
+
+  const columns = useMemo(
+    () => RoleColumns(onRolesRefresh, permissions),
+    [onRolesRefresh, permissions]
+  );
 
   return (
     <Card className="rounded-lg border-none">
@@ -37,6 +45,7 @@ export default function RoleTab({
                 columns={columns}
                 data={roles}
                 onRefresh={onRolesRefresh}
+                permissionOptions={permissions}
               />
             </div>
           </div>

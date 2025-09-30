@@ -111,7 +111,7 @@ export const PermissionColumns = (
           {desc ? (
             <span>{desc}</span>
           ) : (
-            <span className="text-muted-foreground">—</span>
+            <span className="text-muted-foreground"></span>
           )}
         </div>
       );

@@ -180,12 +180,20 @@ export const roleSchema = z.object({
 export type Role = z.infer<typeof roleSchema>;
 export const roleResponseSchema = z.array(roleSchema);
 
+export const roleConfigSchema = z.object({
+  name: z.string().trim().min(1, "Role name is required"),
+  key: z.string().trim().min(1, "Role key is required"),
+  permissions: z.array(z.string()).nullable(),
+});
+
+export type RoleConfig = z.infer<typeof roleConfigSchema>;
+
 //Permissions
 export const permissionSchema = z.object({
   id: z.string(),
   name: z.string(),
   key: z.string(),
-  description: z.string().optional(),
+  description: z.string().optional().nullable(),
 });
 export type Permission = z.infer<typeof permissionSchema>;
 export const permissionResponseSchema = z.array(permissionSchema);
