@@ -22,7 +22,7 @@ export default function RoleTab({
 
   const columns = useMemo(
     () => RoleColumns(onRolesRefresh, permissions),
-    [onRolesRefresh, permissions, roles]
+    [onRolesRefresh, permissions]
   );
 
   return (
