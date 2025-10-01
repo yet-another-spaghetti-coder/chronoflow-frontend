@@ -1,23 +1,62 @@
+import { useParams } from "react-router-dom";
 import { useMemo, useState } from "react";
 import DynamicTabs, { type TabItem } from "@/components/ui/dynamic-tabs";
+import { useAuthStore } from "@/stores/authStore";
+import { AllTasksTab } from "./all-task-tab";
+import {
+  TasksProvider,
+  useEventTasksContext,
+} from "@/contexts/event-tasks/useEventTasksContext";
 
-export default function TasksPage() {
+function EventTasksTabs() {
   const [active, setActive] = useState<"all" | "mine">("all");
+  const user = useAuthStore((s) => s.user);
+
+  const { tasks, loading, error } = useEventTasksContext();
+
+  const myTasks = useMemo(() => {
+    if (!user) return [];
+    return tasks.filter((t) => t.assignedUser?.id === user.id);
+  }, [tasks, user]);
 
   const tabs: TabItem[] = useMemo(
     () => [
       {
         label: "All Tasks",
         value: "all",
-        component: <p>all tasks</p>,
+        component: (
+          <>
+            {loading ? (
+              <p>Loading…</p>
+            ) : error ? (
+              <p className="text-red-500">{error}</p>
+            ) : (
+              <AllTasksTab
+                tasks={tasks}
+                onEdit={() => {}}
+                onDelete={() => {}}
+              />
+            )}
+          </>
+        ),
       },
       {
         label: "My Tasks",
         value: "mine",
-        component: <p>my task</p>,
+        component: (
+          <>
+            {loading ? (
+              <p>Loading…</p>
+            ) : error ? (
+              <p className="text-red-500">{error}</p>
+            ) : (
+              <p>my tasks ({myTasks.length})</p>
+            )}
+          </>
+        ),
       },
     ],
-    []
+    [loading, error, tasks, myTasks.length]
   );
 
   return (
@@ -28,5 +67,15 @@ export default function TasksPage() {
       onTabChange={(v) => setActive(v as typeof active)}
       mountStrategy="lazy"
     />
+  );
+}
+
+export default function EventTasksPage() {
+  const { id: eventId = null } = useParams<{ id: string }>();
+
+  return (
+    <TasksProvider eventId={eventId} autoFetch>
+      <EventTasksTabs />
+    </TasksProvider>
   );
 }
