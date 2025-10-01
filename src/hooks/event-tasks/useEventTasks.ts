@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { EventTask } from "@/lib/validation/schema";
-import { getEventTasks } from "@/api/eventTaskApi";
+import { getEventTasks } from "@/api/eventTasksApi";
 
 export type UseEventTasksType = {
   tasks: EventTask[];

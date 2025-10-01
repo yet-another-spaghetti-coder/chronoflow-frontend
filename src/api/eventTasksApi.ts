@@ -1,5 +1,4 @@
-// import { http } from "@/lib/http";
-// import { unwrap } from "@/lib/utils";
+import { unwrap } from "@/lib/utils";
 // import { eventTaskListSchema, type EventTask } from "@/lib/validation/schema";
 
 // export async function getEventTasks(eventId: string): Promise<EventTask[]> {
@@ -8,7 +7,13 @@
 //   return eventTaskListSchema.parse(raw);
 // }
 
-import type { EventTask } from "@/lib/validation/schema";
+import { http } from "@/lib/http";
+import {
+  assignableMembersResponseSchema,
+  type EventGroupWithAssignableMembers,
+  type EventTask,
+  type EventTaskConfig,
+} from "@/lib/validation/schema";
 // import { http } from "@/lib/http"; // keep commented while testing
 // import { unwrap } from "@/lib/utils";
 // import { eventTaskListSchema } from "@/lib/validation/schema";
@@ -63,4 +68,29 @@ export async function getEventTasks(eventId: string): Promise<EventTask[]> {
       assignedUser: null, // unassigned task
     },
   ];
+}
+
+export async function createEventTask(eventId: string, input: EventTaskConfig) {
+  const res = await http.post(`/system/events/${eventId}/tasks`, input);
+  return unwrap(res.data);
+}
+
+export async function updateEventTask(
+  eventId: string,
+  taskId: string,
+  input: EventTaskConfig
+) {
+  const res = await http.patch(
+    `/system/events/${eventId}/tasks/${taskId}`,
+    input
+  );
+  return unwrap(res.data);
+}
+
+export async function getAssignableMembers(
+  eventId: string
+): Promise<EventGroupWithAssignableMembers[]> {
+  const res = await http.get(`/system/events/${eventId}/assignable-members`);
+  const raw = unwrap(res.data);
+  return assignableMembersResponseSchema.parse(raw);
 }

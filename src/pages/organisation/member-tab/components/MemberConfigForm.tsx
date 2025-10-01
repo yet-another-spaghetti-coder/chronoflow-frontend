@@ -202,7 +202,7 @@ export default function MemberConfigFormModal({
                                 <CommandGroup>
                                   {rolesOptions.map((opt) => {
                                     const checked = selected.has(opt.id);
-                                    
+
                                     const toggle = (nextChecked?: boolean) => {
                                       const next = new Set(field.value ?? []);
                                       const shouldAdd = nextChecked ?? !checked;

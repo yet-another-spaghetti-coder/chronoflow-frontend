@@ -1,6 +1,15 @@
 import type { EventTask } from "@/lib/validation/schema";
 
-export type TaskStatusCode = 0 | 1 | 2 | 3 | 4 | null | undefined;
+export type TaskStatusCode =
+  | 0 // Pending
+  | 1 // In Progress
+  | 2 // Completed
+  | 3 // Delayed
+  | 4 // Blocked
+  | 5 // Pending Approval
+  | 6 // Rejected
+  | null
+  | undefined;
 
 export function getTaskStatusText(status: TaskStatusCode): string {
   switch (status) {
@@ -14,6 +23,10 @@ export function getTaskStatusText(status: TaskStatusCode): string {
       return "Delayed";
     case 4:
       return "Blocked";
+    case 5:
+      return "Pending Approval";
+    case 6:
+      return "Rejected";
     default:
       return "Unknown";
   }
@@ -49,6 +62,16 @@ export function getTaskStatusStyle(status: TaskStatusCode): {
         badge: "bg-rose-100 text-rose-700 ring-rose-500/20",
         dot: "bg-rose-500",
       };
+    case 5: // Pending Approval
+      return {
+        badge: "bg-blue-100 text-blue-700 ring-blue-500/20",
+        dot: "bg-blue-500",
+      };
+    case 6: // Rejected
+      return {
+        badge: "bg-red-100 text-red-700 ring-red-500/20",
+        dot: "bg-red-500",
+      };
     default: // Unknown
       return {
         badge: "bg-gray-100 text-gray-700 ring-gray-500/20",
@@ -63,29 +86,37 @@ export type CategorizedTasks = {
   inProgressTasks: EventTask[];
   delayedTasks: EventTask[];
   blockedTasks: EventTask[];
+  pendingApprovalTasks: EventTask[];
+  rejectedTasks: EventTask[];
 };
 
 export function categorizeTasks(tasks: EventTask[]): CategorizedTasks {
   return tasks.reduce<CategorizedTasks>(
     (acc, task) => {
       switch (task.status) {
-        case 0: // Pending
+        case 0:
           acc.pendingTasks.push(task);
           break;
-        case 1: // In Progress
+        case 1:
           acc.inProgressTasks.push(task);
           break;
-        case 2: // Completed
+        case 2:
           acc.completedTasks.push(task);
           break;
-        case 3: // Delayed
+        case 3:
           acc.delayedTasks.push(task);
           break;
-        case 4: // Blocked
+        case 4:
           acc.blockedTasks.push(task);
           break;
+        case 5:
+          acc.pendingApprovalTasks.push(task);
+          break;
+        case 6:
+          acc.rejectedTasks.push(task);
+          break;
         default:
-          break; // ignore unknown statuses
+          break;
       }
       return acc;
     },
@@ -95,6 +126,8 @@ export function categorizeTasks(tasks: EventTask[]): CategorizedTasks {
       inProgressTasks: [],
       delayedTasks: [],
       blockedTasks: [],
+      pendingApprovalTasks: [],
+      rejectedTasks: [],
     }
   );
 }
