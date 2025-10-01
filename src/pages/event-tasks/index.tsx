@@ -2,17 +2,17 @@ import { useParams } from "react-router-dom";
 import { useMemo, useState } from "react";
 import DynamicTabs, { type TabItem } from "@/components/ui/dynamic-tabs";
 import { useAuthStore } from "@/stores/authStore";
-import { useEventTasks } from "@/hooks/eventTasks/useEventTasks";
+import { AllTasksTab } from "./all-task-tab";
+import {
+  TasksProvider,
+  useEventTasksContext,
+} from "@/contexts/event-tasks/useEventTasksContext";
 
-export default function EventTasksPage() {
-  const { id: eventId } = useParams<{ id: string }>();
+function EventTasksTabs() {
   const [active, setActive] = useState<"all" | "mine">("all");
-
   const user = useAuthStore((s) => s.user);
-  const { tasks, loading, error} = useEventTasks(
-    eventId ?? null,
-    true
-  );
+
+  const { tasks, loading, error } = useEventTasksContext();
 
   const myTasks = useMemo(() => {
     if (!user) return [];
@@ -31,7 +31,11 @@ export default function EventTasksPage() {
             ) : error ? (
               <p className="text-red-500">{error}</p>
             ) : (
-              <p>all tasks ({tasks.length})</p>
+              <AllTasksTab
+                tasks={tasks}
+                onEdit={() => {}}
+                onDelete={() => {}}
+              />
             )}
           </>
         ),
@@ -52,7 +56,7 @@ export default function EventTasksPage() {
         ),
       },
     ],
-    [loading, error, tasks.length, myTasks.length]
+    [loading, error, tasks, myTasks.length]
   );
 
   return (
@@ -63,5 +67,15 @@ export default function EventTasksPage() {
       onTabChange={(v) => setActive(v as typeof active)}
       mountStrategy="lazy"
     />
+  );
+}
+
+export default function EventTasksPage() {
+  const { id: eventId = null } = useParams<{ id: string }>();
+
+  return (
+    <TasksProvider eventId={eventId} autoFetch>
+      <EventTasksTabs />
+    </TasksProvider>
   );
 }
