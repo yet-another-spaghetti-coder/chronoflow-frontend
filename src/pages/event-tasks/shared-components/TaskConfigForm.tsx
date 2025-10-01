@@ -81,7 +81,6 @@ export default function TaskConfigFormModal({
     watch,
   } = form;
 
-  // Reset on dialog open/close
   useEffect(() => {
     if (!open) return;
     reset({

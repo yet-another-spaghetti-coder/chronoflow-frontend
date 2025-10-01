@@ -225,6 +225,7 @@ export type RolePermission = z.infer<typeof rolePermissionSchema>;
 export const roleSchema = z.object({
   id: z.string(),
   name: z.string(),
+  isDefault: z.boolean().default(false),
   key: z.string(),
   permissions: z.array(rolePermissionSchema).nullable(),
 });

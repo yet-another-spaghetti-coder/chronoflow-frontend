@@ -29,3 +29,5 @@ export async function deletePermission(permissionId: string) {
   const res = await http.delete(`/system/permissions/${permissionId}`);
   return unwrap(res.data);
 }
+
+

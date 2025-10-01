@@ -6,7 +6,6 @@ import MemberConfigFormSheet from "../MemberConfigForm";
 import Swal from "sweetalert2";
 import { deleteMember } from "@/api/memberApi";
 import type { RoleOption } from "@/services/role";
-import RoleAssignFormModal from "../RoleAssginmentForm";
 
 export const MemberColumns = (
   onRefresh: () => Promise<void> | void,
@@ -68,12 +67,6 @@ export const MemberColumns = (
             member={member}
             onRefresh={onRefresh}
             rolesOptions={roleOptions}
-          />
-          <RoleAssignFormModal
-            userId={member.id}
-            roleOptions={roleOptions}
-            currentRoles={member.roles}
-            onRefresh={onRefresh}
           />
         </div>
       );

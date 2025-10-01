@@ -31,3 +31,6 @@ export function getRoleKeysByIds(
 
   return Array.from(out);
 }
+
+// All system permission
+export const ALL_PERMISSION_ID = "1971465366969307147";
