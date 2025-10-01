@@ -60,7 +60,7 @@ export const RoleColumns = (
         <div className="flex justify-center gap-2">
           {role.isDefault ? (
             <span className="text-muted-foreground text-sm italic">
-              Default roles cannot be edited or deleted
+              Default role cannot be edited or deleted
             </span>
           ) : (
             <>

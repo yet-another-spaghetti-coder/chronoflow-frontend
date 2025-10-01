@@ -20,7 +20,7 @@ export function useOrgEvents(autoFetch: boolean = false): UseOrgEventsType {
     enabled: !!user && autoFetch,
     staleTime: Infinity,
     gcTime: 30 * 60 * 1000,
-    refetchOnMount: false,
+    refetchOnMount: true,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
   });

@@ -1,5 +1,11 @@
 import { useMemo } from "react";
-import { Card, CardContent } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { DataTableLoading } from "@/components/data-table/data-table-skeleton";
 import { useOrgEvents } from "@/hooks/events/useOrgEvents";
 import { OrgEventColumns } from "./components/get-events-table/columns";
@@ -20,6 +26,14 @@ export default function OrgEventsPage() {
 
   return (
     <Card className="rounded-lg border-none">
+      <CardHeader className="pb-2">
+        <CardTitle>Event Management</CardTitle>
+        <CardDescription className="mt-1">
+          View and manage all events within your organisation. You can create
+          new events, update details, track participants, and monitor progress —
+          all in one place.
+        </CardDescription>
+      </CardHeader>
       <CardContent className="p-4 sm:p-6">
         {eventsLoading ? (
           <div className="overflow-x-auto">

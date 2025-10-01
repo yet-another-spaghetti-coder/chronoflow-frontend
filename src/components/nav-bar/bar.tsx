@@ -1,4 +1,5 @@
-import { Link } from "react-router-dom";
+// src/components/nav-bar/bar.tsx
+import { Link, useMatch } from "react-router-dom";
 import {
   NavigationMenu,
   NavigationMenuList,
@@ -8,21 +9,30 @@ import {
   NavigationMenuContent,
 } from "@/components/ui/navigation-menu";
 import { UserNav } from "./user-nav";
+import BackButton from "../navigation/back-button";
 
 type NavbarProps = {
   brand?: React.ReactNode;
 };
 
 export function Navbar({ brand }: NavbarProps) {
+  const onEventRoute = !!useMatch("/event/:id/*");
+
+  const brandNode = onEventRoute ? (
+    <BackButton to="/organisation" label="Back to main organisation page" />
+  ) : (
+    brand ?? (
+      <Link to="/" className="text-lg font-semibold tracking-tight">
+        MyApp
+      </Link>
+    )
+  );
+
   return (
     <header className="sticky top-0 z-50 border-b bg-background/80 backdrop-blur">
-      <div className="flex h-14 items-center justify-between px-4">
-        {/* Brand */}
-        {brand ?? (
-          <Link to="/" className="text-lg font-semibold tracking-tight">
-            MyApp
-          </Link>
-        )}
+      <div className="flex h-14 items-center justify-between px-6 sm:px-8">
+        {/* Brand / Back */}
+        {brandNode}
 
         {/* Main nav */}
         <NavigationMenu>
@@ -52,7 +62,6 @@ export function Navbar({ brand }: NavbarProps) {
                       </Link>
                     </NavigationMenuLink>
                   </li>
-                  {/* add more links here */}
                 </ul>
               </NavigationMenuContent>
             </NavigationMenuItem>

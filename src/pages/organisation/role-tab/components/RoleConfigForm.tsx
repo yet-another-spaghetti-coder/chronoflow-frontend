@@ -37,6 +37,13 @@ import {
 import { createRole, updateRole } from "@/api/roleApi";
 import Swal from "sweetalert2";
 import { ALL_PERMISSION_ID } from "@/services/role";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { Info } from "lucide-react";
 
 type RoleConfigFormProps = {
   role?: Role;
@@ -158,7 +165,22 @@ export default function RoleConfigFormModal({
 
               {/* Key */}
               <div className="grid gap-2">
-                <Label htmlFor="key">Role Key</Label>
+                <div className="mb-1 flex items-center gap-1">
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button type="button" aria-label="What is Role Key?">
+                          <Info className="h-4 w-4 text-yellow-600" />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent side="right" className="max-w-xs">
+                        The role key is the unique identifier for the role
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                  <Label htmlFor="key">Role Key</Label>
+                </div>
+
                 <Input
                   id="key"
                   placeholder="MANAGER"
