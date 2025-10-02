@@ -58,14 +58,22 @@ export const RoleColumns = (
 
       return (
         <div className="flex justify-center gap-2">
-          <Button size="sm" variant="destructive" onClick={onDelete}>
-            Delete
-          </Button>
-          <RoleConfigFormModal
-            role={role}
-            onRefresh={onRefresh}
-            permissionOptions={permissionOptions}
-          />
+          {role.isDefault ? (
+            <span className="text-muted-foreground text-sm italic">
+              Default role cannot be edited or deleted
+            </span>
+          ) : (
+            <>
+              <Button size="sm" variant="destructive" onClick={onDelete}>
+                Delete
+              </Button>
+              <RoleConfigFormModal
+                role={role}
+                onRefresh={onRefresh}
+                permissionOptions={permissionOptions}
+              />
+            </>
+          )}
         </div>
       );
     },
@@ -110,7 +118,7 @@ export const RoleColumns = (
       const perms = (row.getValue("perm_names") as string[]) ?? [];
       if (!perms.length)
         return (
-          <div className="flex justify-center text-muted-foreground">—</div>
+          <div className="flex justify-center text-muted-foreground"></div>
         );
       return (
         <div className="flex justify-center flex-wrap gap-1">

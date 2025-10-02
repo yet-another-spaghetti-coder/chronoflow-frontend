@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { EventTask } from "@/lib/validation/schema";
-import { getEventTasks } from "@/api/eventTaskApi";
+import { getEventTasks } from "@/api/eventTasksApi";
 
 export type UseEventTasksType = {
   tasks: EventTask[];
@@ -24,7 +24,7 @@ export function useEventTasks(
     enabled: autoFetch && !!eventId,
     staleTime: Infinity,
     gcTime: 30 * 60 * 1000,
-    refetchOnMount: false,
+    refetchOnMount: true,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
   });

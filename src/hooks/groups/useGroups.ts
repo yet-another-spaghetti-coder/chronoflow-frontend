@@ -1,4 +1,3 @@
-// src/hooks/groups/useGroups.ts
 import { useCallback, useEffect, useState } from "react";
 import { getGroupsByEvent } from "@/api/groupApi";
 import type { Group } from "@/lib/validation/schema";

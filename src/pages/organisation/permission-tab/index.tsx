@@ -1,5 +1,11 @@
 import { useMemo } from "react";
-import { Card, CardContent } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { DataTableLoading } from "@/components/data-table/data-table-skeleton";
 import { usePermissions } from "@/hooks/permissions/usePermission";
 import { PermissionColumns } from "./components/get-permission-table/columns";
@@ -24,7 +30,13 @@ export default function PermissionTab({
 
   return (
     <Card className="rounded-lg border-none">
-      <CardContent className="p-4 sm:p-6">
+      <CardHeader className="pb-2">
+        <CardTitle>Permission Management</CardTitle>
+        <CardDescription className="mt-1">
+          Create and configure permissions
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="pt-0 p-4 sm:p-2">
         {loading ? (
           <div className="overflow-x-auto">
             <div className="min-w-[720px]">

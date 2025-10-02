@@ -225,6 +225,7 @@ export type RolePermission = z.infer<typeof rolePermissionSchema>;
 export const roleSchema = z.object({
   id: z.string(),
   name: z.string(),
+  isDefault: z.boolean().default(false),
   key: z.string(),
   permissions: z.array(rolePermissionSchema).nullable(),
 });
@@ -272,7 +273,7 @@ export const eventTaskSchema = z.object({
   id: z.string(),
   name: z.string(),
   description: z.string().nullable().optional(),
-  status: z.number().int().min(0).max(4),
+  status: z.number().int().min(0).max(6),
   startTime: z.string().nullable(),
   endTime: z.string().nullable(),
   assignedUser: z
@@ -289,3 +290,36 @@ export const eventTaskSchema = z.object({
 
 export const eventTaskListSchema = z.array(eventTaskSchema);
 export type EventTask = z.infer<typeof eventTaskSchema>;
+
+export const eventTaskConfigSchema = z.object({
+  id: z.string().optional(),
+  name: z.string().min(1, "Task name is required"),
+  description: z.string().nullable().optional(),
+  status: z.number().int().min(0).max(6),
+  startTime: z.string().nullable().optional(),
+  endTime: z.string().nullable().optional(),
+  assignedUserId: z.string().nullable().optional(),
+});
+
+export type EventTaskConfig = z.infer<typeof eventTaskConfigSchema>;
+
+//Assignable members for event tasks
+export const assignableMemberSchema = z.object({
+  id: z.string(),
+  username: z.string(),
+});
+
+export const eventGroupWithAssignableMembersSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  members: z.array(assignableMemberSchema),
+});
+
+export const assignableMembersResponseSchema = z.array(
+  eventGroupWithAssignableMembersSchema
+);
+
+export type AssignableMember = z.infer<typeof assignableMemberSchema>;
+export type EventGroupWithAssignableMembers = z.infer<
+  typeof eventGroupWithAssignableMembersSchema
+>;

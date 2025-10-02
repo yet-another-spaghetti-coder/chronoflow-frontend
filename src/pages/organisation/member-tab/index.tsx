@@ -1,5 +1,11 @@
 import { DataTableLoading } from "@/components/data-table/data-table-skeleton";
-import { Card, CardContent } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { useMembers } from "@/hooks/members/userMember";
 import { useSystemRoles } from "@/hooks/roles/useSystemRoles";
 import { useMemo } from "react";
@@ -34,7 +40,14 @@ export default function MembersTab({
 
   return (
     <Card className="rounded-lg border-none">
-      <CardContent className="p-4 sm:p-6">
+      <CardHeader className="pb-2">
+        <CardTitle>Member Management</CardTitle>
+        <CardDescription>
+          View, edit, and manage all members, their roles, and registration
+          status.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="pt-0 p-4 sm:p-2">
         {loading ? (
           <div className="overflow-x-auto">
             <div className="min-w-[720px]">

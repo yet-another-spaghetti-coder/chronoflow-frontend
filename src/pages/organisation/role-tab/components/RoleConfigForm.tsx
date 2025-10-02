@@ -36,6 +36,14 @@ import {
 } from "@/lib/validation/schema";
 import { createRole, updateRole } from "@/api/roleApi";
 import Swal from "sweetalert2";
+import { ALL_PERMISSION_ID } from "@/services/role";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { Info } from "lucide-react";
 
 type RoleConfigFormProps = {
   role?: Role;
@@ -63,9 +71,8 @@ export default function RoleConfigFormModal({
     register,
     formState: { errors, isSubmitting },
     reset,
+    watch,
   } = form;
-
-  console.log(permissionOptions);
 
   useEffect(() => {
     if (!open) return;
@@ -158,7 +165,22 @@ export default function RoleConfigFormModal({
 
               {/* Key */}
               <div className="grid gap-2">
-                <Label htmlFor="key">Role Key</Label>
+                <div className="mb-1 flex items-center gap-1">
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button type="button" aria-label="What is Role Key?">
+                          <Info className="h-4 w-4 text-yellow-600" />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent side="right" className="max-w-xs">
+                        The role key is the unique identifier for the role
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                  <Label htmlFor="key">Role Key</Label>
+                </div>
+
                 <Input
                   id="key"
                   placeholder="MANAGER"
@@ -177,10 +199,42 @@ export default function RoleConfigFormModal({
                   name="permissions"
                   control={control}
                   render={({ field }) => {
-                    const selected = new Set(field.value ?? []);
-                    const labels = (field.value ?? [])
+                    const current = (watch("permissions") ?? []) as string[];
+                    const selected = new Set(current);
+                    const allSelected = selected.has(ALL_PERMISSION_ID);
+
+                    const labels = current
                       .map((id) => permIdToLabel.get(id))
                       .filter(Boolean) as string[];
+
+                    const toggle = (id: string, nextChecked?: boolean) => {
+                      // Handle the ALL permission toggle so it can be turned on/off
+                      if (id === ALL_PERMISSION_ID) {
+                        if (selected.has(ALL_PERMISSION_ID)) {
+                          // deselect ALL
+                          field.onChange([]);
+                        } else {
+                          // select ONLY ALL
+                          field.onChange([ALL_PERMISSION_ID]);
+                        }
+                        return;
+                      }
+
+                      // If ALL is selected, ignore toggling others
+                      if (allSelected) return;
+
+                      const next = new Set(current);
+                      const shouldAdd =
+                        nextChecked !== undefined ? nextChecked : !next.has(id);
+
+                      if (shouldAdd) next.add(id);
+                      else next.delete(id);
+
+                      // If selecting “some” (any non-ALL), ensure ALL is not present
+                      next.delete(ALL_PERMISSION_ID);
+
+                      field.onChange(Array.from(next));
+                    };
 
                     return (
                       <>
@@ -213,6 +267,7 @@ export default function RoleConfigFormModal({
                               </div>
                             </Button>
                           </PopoverTrigger>
+
                           <PopoverContent className="p-0 w-[--radix-popover-trigger-width]">
                             <Command>
                               <CommandInput placeholder="Search permissions…" />
@@ -222,32 +277,33 @@ export default function RoleConfigFormModal({
                                 </CommandEmpty>
                                 <CommandGroup>
                                   {permissionOptions.map((opt) => {
+                                    const isAll = opt.id === ALL_PERMISSION_ID;
                                     const checked = selected.has(opt.id);
-                                    const toggle = (nextChecked?: boolean) => {
-                                      const next = new Set(field.value ?? []);
-                                      const shouldAdd = nextChecked ?? !checked;
 
-                                      if (shouldAdd) {
-                                        next.add(opt.id);
-                                      } else {
-                                        next.delete(opt.id);
-                                      }
-
-                                      field.onChange(Array.from(next));
-                                    };
+                                    const disableThis = allSelected
+                                      ? !isAll
+                                      : isAll && selected.size > 0;
 
                                     return (
                                       <CommandItem
                                         key={opt.id}
                                         value={opt.name}
-                                        onSelect={() => toggle()}
-                                        className="cursor-pointer"
+                                        onSelect={() =>
+                                          !disableThis && toggle(opt.id)
+                                        }
+                                        className={cn(
+                                          "cursor-pointer",
+                                          disableThis &&
+                                            "opacity-50 pointer-events-none"
+                                        )}
                                       >
                                         <Checkbox
                                           checked={checked}
                                           className="mr-2"
+                                          aria-disabled={disableThis}
                                           onCheckedChange={(v) =>
-                                            toggle(Boolean(v))
+                                            !disableThis &&
+                                            toggle(opt.id, Boolean(v))
                                           }
                                         />
                                         {opt.name}
@@ -259,6 +315,7 @@ export default function RoleConfigFormModal({
                             </Command>
                           </PopoverContent>
                         </Popover>
+
                         <p className="h-5 text-sm text-destructive">
                           {errors.permissions?.message ?? "\u00A0"}
                         </p>
