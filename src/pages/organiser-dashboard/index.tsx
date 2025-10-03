@@ -10,7 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { useOrgEvents } from "@/hooks/events/useOrgEvents"
 import type { OrgEvent } from "@/lib/validation/schema"
 
-function buildMetrics(events: OrgEvent[]): SummaryMetric[] {
+export function buildMetrics(events: OrgEvent[]): SummaryMetric[] {
   const now = new Date()
   const sevenDaysFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000)
 
