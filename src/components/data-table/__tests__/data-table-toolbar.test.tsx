@@ -23,11 +23,17 @@ vi.mock("@/components/data-table/data-table-faceted-filter", () => ({
   },
 }));
 
+type SearchSetter = (
+  nextInit: URLSearchParams | ((prev: URLSearchParams) => URLSearchParams)
+) => void;
+type UseSearchParamsReturn = [URLSearchParams, SearchSetter];
+
+function createSetter(): ReturnType<typeof vi.fn<SearchSetter>> {
+  return vi.fn<SearchSetter>(() => {});
+}
+
 const searchParamsMock = vi.hoisted(() => ({
-  fn: vi.fn<
-    [],
-    [readonly [URLSearchParams, (nextInit: URLSearchParams) => void]]
-  >(),
+  value: [new URLSearchParams(), createSetter()] as UseSearchParamsReturn,
 }));
 
 vi.mock("react-router-dom", async () => {
@@ -36,7 +42,7 @@ vi.mock("react-router-dom", async () => {
   );
   return {
     ...actual,
-    useSearchParams: searchParamsMock.fn,
+    useSearchParams: () => searchParamsMock.value,
   };
 });
 
@@ -75,10 +81,7 @@ function createMockTable<TData>({
 
 beforeEach(() => {
   facetedCalls.length = 0;
-  searchParamsMock.fn.mockReturnValue([
-    new URLSearchParams(),
-    vi.fn(),
-  ] as const);
+  searchParamsMock.value = [new URLSearchParams(), createSetter()];
 });
 
 describe("DataTableToolbar global search", () => {
@@ -135,10 +138,10 @@ describe("DataTableToolbar filters and reset", () => {
       columns: { status: statusColumn },
     });
 
-    searchParamsMock.fn.mockReturnValueOnce([
+    searchParamsMock.value = [
       new URLSearchParams("status=active,completed"),
-      vi.fn(),
-    ] as const);
+      createSetter(),
+    ];
 
     render(
       <DataTableToolbar

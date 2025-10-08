@@ -1,8 +1,6 @@
 import { describe, expect, it } from "vitest";
-import {
-  MemberBulkUpsertResult,
-  registeredFilterOptions,
-} from "../member";
+import { registeredFilterOptions } from "../member";
+import type { MemberBulkUpsertResult } from "../member";
 
 describe("services/member registeredFilterOptions", () => {
   it("returns registered filter pair", () => {

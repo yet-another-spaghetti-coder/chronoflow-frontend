@@ -4,8 +4,8 @@ import {
   categorizeTasks,
   getTaskStatusStyle,
   getTaskStatusText,
-  TaskStatusCode,
 } from "../eventTask";
+import type { TaskStatusCode } from "../eventTask";
 
 describe("services/eventTask getTaskStatusText", () => {
   const cases: Array<[TaskStatusCode, string]> = [

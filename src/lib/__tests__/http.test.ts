@@ -1,5 +1,5 @@
 import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
-import type { AxiosError } from "axios";
+import type { AxiosError, AxiosRequestHeaders } from "axios";
 import { useAuthStore } from "@/stores/authStore";
 
 vi.mock("@/api/authApi", () => ({
@@ -13,12 +13,30 @@ const originalStore = useAuthStore.getState();
 const originalClear = originalStore.clear;
 const originalSetAuth = originalStore.setAuth;
 
+type RetriableAxiosConfig = {
+  url?: string;
+  _retry?: boolean;
+  headers: AxiosRequestHeaders;
+  [key: string]: unknown;
+};
+
 type RetriableAxiosError = AxiosError & {
-  config: {
-    url?: string;
-    _retry?: boolean;
-    [key: string]: unknown;
+  config: RetriableAxiosConfig;
+};
+
+const createRetriableError = (
+  status: number,
+  configOverrides: Partial<RetriableAxiosConfig> = {}
+): RetriableAxiosError => {
+  const config: RetriableAxiosConfig = {
+    headers: {} as AxiosRequestHeaders,
+    ...configOverrides,
   };
+
+  return {
+    response: { status } as AxiosError["response"],
+    config,
+  } as RetriableAxiosError;
 };
 
 const getRejectedInterceptor = () => {
@@ -45,10 +63,7 @@ beforeEach(() => {
 describe("http response interceptor", () => {
   it("bubbles errors that are not 401", async () => {
     const rejected = getRejectedInterceptor();
-    const error = {
-      response: { status: 500 },
-      config: {},
-    } as AxiosError;
+    const error = createRetriableError(500);
 
     await expect(rejected(error)).rejects.toBe(error);
   });
@@ -59,10 +74,10 @@ describe("http response interceptor", () => {
     useAuthStore.setState({ clear: clearSpy });
     const refreshMock = vi.mocked(refresh);
 
-    const error = {
-      response: { status: 401 },
-      config: { url: "/system/auth/login", _retry: false },
-    } as unknown as RetriableAxiosError;
+    const error = createRetriableError(401, {
+      url: "/system/auth/login",
+      _retry: false,
+    });
 
     await expect(rejected(error)).rejects.toBe(error);
 
@@ -74,10 +89,10 @@ describe("http response interceptor", () => {
     const rejected = getRejectedInterceptor();
     const refreshMock = vi.mocked(refresh);
 
-    const error = {
-      response: { status: 401 },
-      config: { url: "/secure/data", _retry: true },
-    } as unknown as RetriableAxiosError;
+    const error = createRetriableError(401, {
+      url: "/secure/data",
+      _retry: true,
+    });
 
     await expect(rejected(error)).rejects.toBe(error);
     expect(refreshMock).not.toHaveBeenCalled();
@@ -98,10 +113,10 @@ describe("http response interceptor", () => {
     const originalAdapter = http.defaults.adapter;
     http.defaults.adapter = adapterMock as typeof http.defaults.adapter;
 
-    const error = {
-      response: { status: 401 },
-      config: { url: "/secure/data", _retry: false },
-    } as unknown as RetriableAxiosError;
+    const error = createRetriableError(401, {
+      url: "/secure/data",
+      _retry: false,
+    });
 
     try {
       const result = await rejected(error);
@@ -127,10 +142,10 @@ describe("http response interceptor", () => {
     const clearSpy = vi.fn(() => useAuthStore.setState({ user: null }));
     useAuthStore.setState({ clear: clearSpy });
 
-    const error = {
-      response: { status: 401 },
-      config: { url: "/secure/data", _retry: false },
-    } as unknown as RetriableAxiosError;
+    const error = createRetriableError(401, {
+      url: "/secure/data",
+      _retry: false,
+    });
 
     await expect(rejected(error)).rejects.toBe(error);
     expect(clearSpy).toHaveBeenCalled();
