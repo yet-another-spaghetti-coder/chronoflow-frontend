@@ -2,7 +2,7 @@ import { unwrap } from "@/lib/utils";
 // import { eventTaskListSchema, type EventTask } from "@/lib/validation/schema";
 
 // export async function getEventTasks(eventId: string): Promise<EventTask[]> {
-//   const res = await http.get(`/system/events/${eventId}/tasks`);
+//   const res = await http.get(`/system/task/${eventId}`);
 //   const raw = unwrap(res.data);
 //   return eventTaskListSchema.parse(raw);
 // }
@@ -19,7 +19,7 @@ import {
 // import { eventTaskListSchema } from "@/lib/validation/schema";
 
 export async function getEventTasks(eventId: string): Promise<EventTask[]> {
-  // const res = await http.get(`/system/events/${eventId}/tasks`);
+  // const res = await http.get(`/system/task/${eventId}`);
   // const raw = unwrap(res.data);
   // return eventTaskListSchema.parse(raw);
 
@@ -71,7 +71,7 @@ export async function getEventTasks(eventId: string): Promise<EventTask[]> {
 }
 
 export async function createEventTask(eventId: string, input: EventTaskConfig) {
-  const res = await http.post(`/system/events/${eventId}/tasks`, input);
+  const res = await http.post(`/system/task/${eventId}`, input);
   return unwrap(res.data);
 }
 
@@ -81,7 +81,7 @@ export async function updateEventTask(
   input: EventTaskConfig
 ) {
   const res = await http.patch(
-    `/system/events/${eventId}/tasks/${taskId}`,
+    `/system/task/${eventId}/${taskId}`,
     input
   );
   return unwrap(res.data);
