@@ -21,9 +21,6 @@ const buildGroup = (overrides: Partial<MemberDashboardGroup> = {}): MemberDashbo
     startTime: new Date("2024-04-01T10:00:00Z"),
     endTime: new Date("2024-04-01T12:00:00Z"),
     remark: null,
-    joiningParticipants: 50,
-    groups: [],
-    taskStatus: { total: 5, remaining: 2, completed: 3 },
   },
   ...overrides,
 });

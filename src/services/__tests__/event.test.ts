@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
   eventStatusFilterOptions,
-  EventStatusCode,
   getEventStatusStyles,
   getEventStatusText,
 } from "../event";
+import type { EventStatusCode } from "../event";
 
 describe("services/event getEventStatusText", () => {
   const cases: Array<[EventStatusCode, string]> = [
