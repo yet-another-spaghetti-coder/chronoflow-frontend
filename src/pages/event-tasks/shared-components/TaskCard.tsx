@@ -6,11 +6,10 @@ import {
 } from "@/components/ui/collapsible";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { cn } from "@/lib/utils";
 import type { EventTask } from "@/lib/validation/schema";
 import {
+  getInitialName,
   getTaskStatusStyle,
-  getTaskStatusText,
   type TaskStatusCode,
 } from "@/services/eventTask";
 import * as React from "react";
@@ -18,31 +17,44 @@ import {
   deleteEventTaskSample,
   updateEventTaskSample,
 } from "@/api/eventTasksApi";
+import { ArrowRight, ChevronUp, Info } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { cn } from "@/lib/utils";
 
 interface TaskCardProps {
   task: EventTask;
 }
 
 export function TaskCard({ task }: TaskCardProps) {
-  const assigneeInitials =
-    task.assignedUser?.name
-      ?.split(" ")
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase() ?? "?";
-
-  const status = task.status as TaskStatusCode;
-  const statusStyle = getTaskStatusStyle(status);
+  const assigneeInitials = getInitialName(task.assignedUser?.name);
+  const assignerInitials = getInitialName(task.assignerUser?.name) || "??";
 
   const dueText = React.useMemo(() => {
     if (!task.endTime) return "—";
     const date = new Date(task.endTime);
     if (Number.isNaN(date.getTime())) return "—";
-    return date.toLocaleDateString();
+    return date.toLocaleString(undefined, {
+      year: "numeric",
+      month: "short",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    });
   }, [task.endTime]);
 
+  const [isOpen, setIsOpen] = React.useState(true);
+
+  const statusStyle = React.useMemo(() => {
+    return getTaskStatusStyle(task.status as TaskStatusCode);
+  }, [task.status]);
+
   return (
-    <Collapsible asChild>
+    <Collapsible asChild open={isOpen} onOpenChange={setIsOpen}>
       <Card className="w-full p-3">
         {/* Header (trigger) */}
         <CollapsibleTrigger
@@ -53,67 +65,115 @@ export function TaskCard({ task }: TaskCardProps) {
           {task.assignedUser && (
             <Avatar className="h-6 w-6 shrink-0">
               <AvatarFallback className="text-xs">
-                {assigneeInitials}
+                {isOpen ? <ChevronUp /> : assigneeInitials}
               </AvatarFallback>
             </Avatar>
           )}
         </CollapsibleTrigger>
 
         {/* Expanded content */}
-        <CollapsibleContent className="mt-3 space-y-3 text-sm">
+        <CollapsibleContent className="mt-2 space-y-6 text-sm">
           {task.description && (
             <p className="text-muted-foreground">{task.description}</p>
           )}
 
-          <div className="flex items-center justify-between">
-            {/* Assignee */}
+          {/* Assigner → Assignee (with arrow divider) */}
+          <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-4">
+            {/* Assigner */}
             <div className="flex items-center gap-2">
               <Avatar className="h-7 w-7">
                 <AvatarFallback className="text-xs">
-                  {assigneeInitials}
+                  {assignerInitials}
                 </AvatarFallback>
               </Avatar>
               <div>
                 <div className="font-medium">
-                  {task.assignedUser?.name ?? "Unassigned"}
+                  {task.assignerUser?.name ?? "Unassigned"}
                 </div>
-                {task.assignedUser?.group && (
+                {task.assignerUser?.groups && (
                   <div className="text-xs text-muted-foreground">
-                    {task.assignedUser.group.name}
+                    {task.assignerUser.groups.map((g) => g.name).join(", ")}
                   </div>
                 )}
               </div>
             </div>
 
-            {/* Status badge */}
-            <span
-              className={cn(
-                "rounded px-2 py-0.5 text-xs font-medium ring-1",
-                statusStyle.badge
-              )}
-            >
-              {getTaskStatusText(status)}
-            </span>
+            {/* Arrow divider with status-based background */}
+            <div className="justify-self-center">
+              <span
+                className={cn(
+                  "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ring-1",
+                  statusStyle.theme // ← uses the same color theme as the task status
+                )}
+              >
+                assigns&nbsp;to
+                <ArrowRight className="h-3.5 w-3.5" />
+              </span>
+            </div>
+
+            {/* Assignee */}
+            <div className="flex items-center gap-2 justify-self-end">
+              <Avatar className="h-7 w-7">
+                <AvatarFallback className="text-xs">
+                  {assigneeInitials}
+                </AvatarFallback>
+              </Avatar>
+              <div className="text-right">
+                <div className="font-medium">
+                  {task.assignedUser?.name ?? "Unassigned"}
+                </div>
+                {task.assignedUser?.groups && (
+                  <div className="text-xs text-muted-foreground">
+                    {task.assignedUser.groups.map((g) => g.name).join(", ")}
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
 
-          {/* Due date */}
-          <div className="text-xs text-muted-foreground">Due: {dueText}</div>
+          {/* Due date + optional remark icon */}
+          <div className="flex items-center justify-between text-xs text-muted-foreground mt-2">
+            <span>Due: {dueText}</span>
+
+            {task.remark && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Info className="h-4 w-4 text-muted-foreground cursor-pointer hover:text-foreground" />
+                </TooltipTrigger>
+                <TooltipContent side="left" className="max-w-[250px]">
+                  <p className="text-xs">{task.remark}</p>
+                </TooltipContent>
+              </Tooltip>
+            )}
+          </div>
 
           {/* Actions */}
-          <div className="flex gap-2">
+          <div className="flex items-center justify-between mt-2">
+            {/* Left side: Edit + Delete */}
+            <div className="flex gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => updateEventTaskSample()}
+              >
+                Edit
+              </Button>
+              <Button
+                size="sm"
+                variant="destructive"
+                onClick={() => deleteEventTaskSample()}
+              >
+                Delete
+              </Button>
+            </div>
+
+            {/* Right side: View Task Log */}
             <Button
               size="sm"
-              variant="outline"
-              onClick={() => updateEventTaskSample()}
+              variant="secondary"
+              onClick={() => console.log("View Task Log clicked")}
             >
-              Edit
-            </Button>
-            <Button
-              size="sm"
-              variant="destructive"
-              onClick={() => deleteEventTaskSample()}
-            >
-              Delete
+              View Task Log
             </Button>
           </div>
         </CollapsibleContent>

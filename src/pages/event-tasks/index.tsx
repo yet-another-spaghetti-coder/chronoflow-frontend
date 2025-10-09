@@ -10,7 +10,7 @@ import MyAssignTaskPage from "./my-assign-task";
 function EventTasksTabs() {
   const [active, setActive] = useState<"all" | "mine">("all");
 
-  const {loading, error } = useEventTasksContext();
+  const { loading, error } = useEventTasksContext();
 
   const tabs: TabItem[] = useMemo(
     () => [

@@ -1,13 +1,5 @@
 // src/components/nav-bar/bar.tsx
 import { Link, useMatch } from "react-router-dom";
-import {
-  NavigationMenu,
-  NavigationMenuList,
-  NavigationMenuItem,
-  NavigationMenuLink,
-  NavigationMenuTrigger,
-  NavigationMenuContent,
-} from "@/components/ui/navigation-menu";
 import { UserNav } from "./user-nav";
 import BackButton from "../navigation/back-button";
 
@@ -19,7 +11,7 @@ export function Navbar({ brand }: NavbarProps) {
   const onEventRoute = !!useMatch("/event/:id/*");
 
   const brandNode = onEventRoute ? (
-    <BackButton to="/organisation" label="Back to main organisation page" />
+    <BackButton to="/events" label="Back to all events page" />
   ) : (
     brand ?? (
       <Link to="/" className="text-lg font-semibold tracking-tight">
@@ -35,7 +27,7 @@ export function Navbar({ brand }: NavbarProps) {
         {brandNode}
 
         {/* Main nav */}
-        <NavigationMenu>
+        {/* <NavigationMenu>
           <NavigationMenuList>
             <NavigationMenuItem>
               <NavigationMenuLink asChild>
@@ -66,7 +58,7 @@ export function Navbar({ brand }: NavbarProps) {
               </NavigationMenuContent>
             </NavigationMenuItem>
           </NavigationMenuList>
-        </NavigationMenu>
+        </NavigationMenu> */}
 
         {/* Right actions */}
         <div className="flex items-center gap-2">

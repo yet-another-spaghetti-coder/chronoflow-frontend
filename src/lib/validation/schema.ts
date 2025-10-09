@@ -125,10 +125,7 @@ const MemberDashboardAssignedUserSchema = z.object({
   name: z.string().nullable().optional(),
   email: z.string().nullable().optional(),
   phone: z.string().nullable().optional(),
-  groups: z
-    .array(MemberDashboardAssignmentGroupSchema)
-    .optional()
-    .default([]),
+  groups: z.array(MemberDashboardAssignmentGroupSchema).optional().default([]),
 });
 export type MemberDashboardAssignedUser = z.infer<
   typeof MemberDashboardAssignedUserSchema
@@ -357,20 +354,41 @@ export type PermissionConfig = z.infer<typeof permissionConfigSchema>;
 export const eventTaskSchema = z.object({
   id: z.string(),
   name: z.string(),
-  description: z.string().nullable().optional(),
-  status: z.number().int().min(0).max(6),
+  description: z.string().nullable(),
+  status: z.number().int(), // backend currently returns 0..?
   startTime: z.string().nullable(),
   endTime: z.string().nullable(),
-  assignedUser: z
-    .object({
-      id: z.string(),
-      name: z.string(),
-      group: z.object({
-        id: z.string(),
-        name: z.string(),
-      }),
-    })
-    .nullable(),
+  remark: z.string().nullable(),
+  createTime: z.string().nullable(),
+  updateTime: z.string().nullable(),
+  assignerUser: z.object({
+    id: z.string(),
+    name: z.string(),
+    email: z.string().nullable(),
+    phone: z.string().nullable(),
+    groups: z
+      .array(
+        z.object({
+          id: z.string(),
+          name: z.string(),
+        })
+      )
+      .nullable(),
+  }),
+  assignedUser: z.object({
+    id: z.string(),
+    name: z.string(),
+    email: z.string().nullable(),
+    phone: z.string().nullable(),
+    groups: z
+      .array(
+        z.object({
+          id: z.string(),
+          name: z.string(),
+        })
+      )
+      .nullable(),
+  }),
 });
 
 export const eventTaskListSchema = z.array(eventTaskSchema);
@@ -408,3 +426,48 @@ export type AssignableMember = z.infer<typeof assignableMemberSchema>;
 export type EventGroupWithAssignableMembers = z.infer<
   typeof eventGroupWithAssignableMembersSchema
 >;
+
+//Event task log
+
+//Attendees
+export const attendeeSchema = z.object({
+  id: z.string(),
+  attendeeEmail: z.email("Invalid email"),
+  attendeeName: z.string().trim().min(1, "Name is required"),
+  attendeeMobile: z
+    .string()
+    .trim()
+    .regex(/^(?:\+65|0065)?[89]\d{7}$/, "Invalid Singapore mobile number"),
+  checkInToken: z.string(),
+  qrCodeBase64: z.string().nullable(),
+  qrCodeUrl: z.string().nullable(),
+});
+
+export const attendeesResponseSchema = z.array(attendeeSchema);
+export type Attendee = z.infer<typeof attendeeSchema>;
+
+//Indi attendee config
+export const IndiAttendeeConfigSchema = z.object({
+  email: z
+    .string()
+    .trim()
+    .regex(/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/, "Invalid email address"),
+  name: z.string().trim().min(1, "Name is required"),
+  mobile: z
+    .string()
+    .trim()
+    .regex(/^(?:\+65|0065)?[89]\d{7}$/, "Invalid Singapore mobile number"),
+});
+
+export type IndiAttendeeConfig = z.infer<typeof IndiAttendeeConfigSchema>;
+
+//Attendee config
+export const AttendeeConfigSchema = z.object({
+  eventId: z.string().trim().min(1, "Event ID is required"),
+  attendees: z
+    .array(IndiAttendeeConfigSchema)
+    .min(1, "At least one attendee is required"),
+  qrSize: z.number().int().positive().optional().default(400),
+});
+
+export type AttendeeConfig = z.infer<typeof AttendeeConfigSchema>;

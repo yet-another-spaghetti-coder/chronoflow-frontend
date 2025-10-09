@@ -1,8 +1,12 @@
 import type { EventTask } from "@/lib/validation/schema";
 
+/* ──────────────────────────────────────────────────────────────────────────────
+ *  Task Status (Backend-aligned)
+ * ────────────────────────────────────────────────────────────────────────────── */
+
 export type TaskStatusCode =
   | 0 // Pending
-  | 1 // In Progress
+  | 1 // Progress
   | 2 // Completed
   | 3 // Delayed
   | 4 // Blocked
@@ -11,123 +15,153 @@ export type TaskStatusCode =
   | null
   | undefined;
 
+const STATUS_META: Record<
+  Exclude<TaskStatusCode, null | undefined>,
+  { text: string; theme: string; dot: string }
+> = {
+  0: {
+    text: "Pending",
+    theme: "bg-gray-100 text-gray-700 ring-gray-500/20",
+    dot: "bg-gray-500",
+  },
+  1: {
+    text: "In Progress",
+    theme: "bg-cyan-100 text-cyan-700 ring-cyan-500/20",
+    dot: "bg-cyan-500",
+  },
+  2: {
+    text: "Completed",
+    theme: "bg-green-100 text-green-700 ring-green-500/20",
+    dot: "bg-green-500",
+  },
+  3: {
+    text: "Delayed",
+    theme: "bg-orange-100 text-orange-700 ring-orange-500/20",
+    dot: "bg-orange-500",
+  },
+  4: {
+    text: "Blocked",
+    theme: "bg-amber-100 text-amber-700 ring-amber-500/20",
+    dot: "bg-amber-500",
+  },
+  5: {
+    text: "Pending Approval",
+    theme: "bg-blue-100 text-blue-700 ring-blue-500/20",
+    dot: "bg-blue-500",
+  },
+  6: {
+    text: "Rejected",
+    theme: "bg-red-100 text-red-700 ring-red-500/20",
+    dot: "bg-red-500",
+  },
+};
+
+const UNKNOWN_STYLE = {
+  theme: "bg-zinc-100 text-zinc-700 ring-zinc-500/20",
+  dot: "bg-zinc-500",
+};
+
+/* ──────────────────────────────────────────────────────────────────────────────
+ *  Helpers: Status Text & Styles
+ * ────────────────────────────────────────────────────────────────────────────── */
+
 export function getTaskStatusText(status: TaskStatusCode): string {
-  switch (status) {
-    case 0:
-      return "Pending";
-    case 1:
-      return "In Progress";
-    case 2:
-      return "Completed";
-    case 3:
-      return "Delayed";
-    case 4:
-      return "Blocked";
-    case 5:
-      return "Pending Approval";
-    case 6:
-      return "Rejected";
-    default:
-      return "Unknown";
-  }
+  return status != null ? STATUS_META[status]?.text ?? "Unknown" : "Unknown";
 }
 
 export function getTaskStatusStyle(status: TaskStatusCode): {
-  badge: string;
+  theme: string;
   dot: string;
 } {
-  switch (status) {
-    case 0: // Pending
-      return {
-        badge: "bg-zinc-100 text-zinc-700 ring-zinc-500/20",
-        dot: "bg-zinc-500",
-      };
-    case 1: // In Progress
-      return {
-        badge: "bg-violet-100 text-violet-700 ring-violet-500/20",
-        dot: "bg-violet-500",
-      };
-    case 2: // Completed
-      return {
-        badge: "bg-emerald-100 text-emerald-700 ring-emerald-500/20",
-        dot: "bg-emerald-500",
-      };
-    case 3: // Delayed
-      return {
-        badge: "bg-amber-100 text-amber-700 ring-amber-500/20",
-        dot: "bg-amber-500",
-      };
-    case 4: // Blocked
-      return {
-        badge: "bg-rose-100 text-rose-700 ring-rose-500/20",
-        dot: "bg-rose-500",
-      };
-    case 5: // Pending Approval
-      return {
-        badge: "bg-blue-100 text-blue-700 ring-blue-500/20",
-        dot: "bg-blue-500",
-      };
-    case 6: // Rejected
-      return {
-        badge: "bg-red-100 text-red-700 ring-red-500/20",
-        dot: "bg-red-500",
-      };
-    default: // Unknown
-      return {
-        badge: "bg-gray-100 text-gray-700 ring-gray-500/20",
-        dot: "bg-gray-500",
-      };
-  }
+  return status != null ? STATUS_META[status] ?? UNKNOWN_STYLE : UNKNOWN_STYLE;
 }
 
-export type CategorizedTasks = {
-  completedTasks: EventTask[];
-  pendingTasks: EventTask[];
-  inProgressTasks: EventTask[];
-  delayedTasks: EventTask[];
-  blockedTasks: EventTask[];
-  pendingApprovalTasks: EventTask[];
-  rejectedTasks: EventTask[];
+/* ──────────────────────────────────────────────────────────────────────────────
+ *  Board Categorization (matches backend statuses)
+ * ────────────────────────────────────────────────────────────────────────────── */
+
+export type BoardBuckets = {
+  pending: EventTask[];
+  progress: EventTask[];
+  completed: EventTask[];
+  delayed: EventTask[];
+  blocked: EventTask[];
+  pendingApproval: EventTask[];
+  rejected: EventTask[];
 };
 
-export function categorizeTasks(tasks: EventTask[]): CategorizedTasks {
-  return tasks.reduce<CategorizedTasks>(
-    (acc, task) => {
-      switch (task.status) {
-        case 0:
-          acc.pendingTasks.push(task);
-          break;
-        case 1:
-          acc.inProgressTasks.push(task);
-          break;
-        case 2:
-          acc.completedTasks.push(task);
-          break;
-        case 3:
-          acc.delayedTasks.push(task);
-          break;
-        case 4:
-          acc.blockedTasks.push(task);
-          break;
-        case 5:
-          acc.pendingApprovalTasks.push(task);
-          break;
-        case 6:
-          acc.rejectedTasks.push(task);
-          break;
-        default:
-          break;
-      }
-      return acc;
-    },
-    {
-      completedTasks: [],
-      pendingTasks: [],
-      inProgressTasks: [],
-      delayedTasks: [],
-      blockedTasks: [],
-      pendingApprovalTasks: [],
-      rejectedTasks: [],
+export function categorizeTasksForBoard(tasks: EventTask[]): BoardBuckets {
+  const buckets: BoardBuckets = {
+    pending: [],
+    progress: [],
+    completed: [],
+    delayed: [],
+    blocked: [],
+    pendingApproval: [],
+    rejected: [],
+  };
+
+  for (const t of tasks) {
+    switch (t.status as TaskStatusCode) {
+      case 0:
+        buckets.pending.push(t);
+        break;
+      case 1:
+        buckets.progress.push(t);
+        break;
+      case 2:
+        buckets.completed.push(t);
+        break;
+      case 3:
+        buckets.delayed.push(t);
+        break;
+      case 4:
+        buckets.blocked.push(t);
+        break;
+      case 5:
+        buckets.pendingApproval.push(t);
+        break;
+      case 6:
+        buckets.rejected.push(t);
+        break;
+      default:
+        break;
     }
+  }
+
+  return buckets;
+}
+
+/* ──────────────────────────────────────────────────────────────────────────────
+ *  Filters: My Tasks / My Assigned Tasks
+ * ────────────────────────────────────────────────────────────────────────────── */
+
+export function filterMyTasks(
+  tasks: EventTask[],
+  currentUserId: string
+): EventTask[] {
+  return tasks.filter(
+    (task) => task.assignedUser && task.assignedUser.id === currentUserId
+  );
+}
+
+export function filterMyAssignedTasks(
+  tasks: EventTask[],
+  currentUserId: string
+): EventTask[] {
+  return tasks.filter(
+    (task) => task.assignerUser && task.assignerUser.id === currentUserId
+  );
+}
+
+export function getInitialName(name?: string): string {
+  if (!name) return "?";
+  return (
+    name
+      .trim()
+      .split(/\s+/)
+      .map((n) => n[0]?.toUpperCase() ?? "")
+      .join("")
+      .slice(0, 2) || "?"
   );
 }

@@ -4,6 +4,7 @@ import {
   LayoutDashboard,
   ListChecks,
   Building2,
+  UserRoundPlus,
   type LucideIcon,
 } from "lucide-react";
 
@@ -73,6 +74,7 @@ export function getMenuList(
   const dashboardPath = `${base}/dashboard`;
   const groupPath = `${base}/groups`;
   const taskPath = `${base}/tasks`;
+  const attendeePath = `${base}/attendees`;
 
   return [
     {
@@ -103,6 +105,18 @@ export function getMenuList(
           active: pathname === taskPath,
           submenus: [],
           icon: ListChecks,
+        },
+      ],
+    },
+     {
+      groupLabel: "Attendee Management",
+      menus: [
+        {
+          href: attendeePath,
+          label: "Attendees",
+          active: pathname === attendeePath,
+          submenus: [],
+          icon: UserRoundPlus,
         },
       ],
     },

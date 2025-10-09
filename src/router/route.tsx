@@ -11,6 +11,7 @@ import SpecificEventGroupsPage from "@/pages/event-groups";
 import SpecificEventTasksPage from "@/pages/event-tasks";
 import OrganiserDashboardPage from "@/pages/organiser-dashboard";
 import MemberDashboardPage from "@/pages/member-dashboard";
+import SpecificEventAttendeesPage from "@/pages/event-attendees";
 
 const router = createBrowserRouter([
   {
@@ -40,6 +41,10 @@ const router = createBrowserRouter([
           {
             path: "event/:id/tasks",
             element: <SpecificEventTasksPage />,
+          },
+          {
+            path: "event/:id/attendees",
+            element: <SpecificEventAttendeesPage />,
           },
         ],
       },
