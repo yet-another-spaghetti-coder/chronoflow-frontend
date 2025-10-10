@@ -497,7 +497,7 @@ const localDateTimeString = z
 /** FileResult */
 export const fileResultSchema = z.object({
   objectName: z.string(),
-  name: z.string(),
+  name: z.string().nullable().optional(),
   contentType: z.string(),
   size: z.string(),
   signedUrl: z.string(),

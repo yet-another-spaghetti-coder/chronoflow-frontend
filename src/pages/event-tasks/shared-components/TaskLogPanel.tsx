@@ -148,7 +148,7 @@ export default function TaskLogModal({
                         <div className="flex gap-3 snap-x snap-mandatory">
                           {log.fileResults.map((f, idx) => {
                             const isImage = /^image\//i.test(f.contentType);
-                            const label = f.name;
+                            const label = f.name ?? f.objectName;
                             const sizeNum =
                               typeof f.size === "number"
                                 ? f.size
