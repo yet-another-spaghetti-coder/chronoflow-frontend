@@ -1,7 +1,6 @@
 import {
   CalendarDays,
   Users,
-  LayoutDashboard,
   ListChecks,
   Building2,
   UserRoundPlus,
@@ -71,24 +70,11 @@ export function getMenuList(
   }
 
   const base = `/event/${selectedEventId}`;
-  const dashboardPath = `${base}/dashboard`;
   const groupPath = `${base}/groups`;
   const taskPath = `${base}/tasks`;
   const attendeePath = `${base}/attendees`;
 
   return [
-    {
-      groupLabel: "Event Dashboard",
-      menus: [
-        {
-          href: dashboardPath,
-          label: "Overview",
-          active: pathname === dashboardPath,
-          submenus: [],
-          icon: LayoutDashboard,
-        },
-      ],
-    },
     {
       groupLabel: "Event Management",
       menus: [
@@ -108,7 +94,7 @@ export function getMenuList(
         },
       ],
     },
-     {
+    {
       groupLabel: "Attendee Management",
       menus: [
         {
