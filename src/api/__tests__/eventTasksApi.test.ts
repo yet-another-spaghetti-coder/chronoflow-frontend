@@ -1,146 +1,171 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { EventTaskConfig } from "@/lib/validation/schema";
+import { describe, expect, it } from "vitest";
+import {
+  categorizeTasksForBoard,
+  getTaskStatusStyle,
+  getTaskStatusText,
+  filterMyTasks,
+  filterMyAssignedTasks,
+  getInitialName,
+  type TaskStatusCode,
+} from "@/services/eventTask";
 
-const httpMock = vi.hoisted(() => ({
-  get: vi.fn(),
-  post: vi.fn(),
-  patch: vi.fn(),
-})) as {
-  get: ReturnType<typeof vi.fn>;
-  post: ReturnType<typeof vi.fn>;
-  patch: ReturnType<typeof vi.fn>;
+type TestUser = {
+  id: string;
+  name?: string;
+  groups?: { id?: string; name: string }[];
+} | null;
+
+type TestTask = {
+  id: string;
+  name: string;
+  description: string | null;
+  status: TaskStatusCode | number | null | undefined;
+  startTime: string | null;
+  endTime: string | null;
+  assignedUser: TestUser;
+  assignerUser: TestUser;
 };
 
-vi.mock("@/lib/http", () => ({
-  http: httpMock,
-}));
 
-const httpGet = httpMock.get;
-const httpPost = httpMock.post;
-const httpPatch = httpMock.patch;
-
-import {
-  createEventTask,
-  deleteEventTaskSample,
-  getAssignableMembers,
-  getEventTasks,
-  updateEventTask,
-  updateEventTaskSample,
-} from "../eventTasksApi";
-
-beforeEach(() => {
-  httpGet.mockReset();
-  httpPost.mockReset();
-  httpPatch.mockReset();
+const makeTask = (status: TaskStatusCode, overrides: Partial<TestTask> = {}): TestTask => ({
+  id: `task-${String(status)}`,
+  name: `Task ${String(status)}`,
+  description: null,
+  status,
+  startTime: null,
+  endTime: null,
+  assignedUser: null,
+  assignerUser: null,
+  ...overrides,
 });
 
-afterEach(() => {
-  vi.restoreAllMocks();
-});
+describe("services/eventTask getTaskStatusText", () => {
+  const cases: Array<[TaskStatusCode, string]> = [
+    [0, "Pending"],
+    [1, "In Progress"],
+    [2, "Completed"],
+    [3, "Delayed"],
+    [4, "Blocked"],
+    [5, "Pending Approval"],
+    [6, "Rejected"],
+    [null, "Unknown"],
+    [undefined, "Unknown"],
+  ];
 
-const okResponse = (data: unknown = true) => ({ data: { code: 0, data } });
-
-describe("eventTasksApi getEventTasks", () => {
-  it("returns mock tasks for provided event", async () => {
-    const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
-
-    const tasks = await getEventTasks("event-100");
-
-    expect(logSpy).toHaveBeenCalledWith(
-      "Fetching tasks for event ID:",
-      "event-100"
-    );
-    expect(tasks).toHaveLength(3);
-    expect(tasks[0].name).toBe("Speaker Coordination");
+  it.each(cases)("returns '%s' for status %s", (status, expected) => {
+    expect(getTaskStatusText(status)).toBe(expected);
   });
 });
 
-describe("eventTasksApi createEventTask", () => {
-  it("posts event task config", async () => {
-    const config: EventTaskConfig = {
-      id: undefined,
-      name: "Arrange Venue",
-      description: null,
-      status: 1,
-      startTime: null,
-      endTime: null,
-      assignedUserId: null,
-    };
+describe("services/eventTask getTaskStatusStyle", () => {
+  it("returns known theme styles", () => {
+    expect(getTaskStatusStyle(0)).toEqual({
+      text: "Pending",
+      theme: "bg-gray-100 text-gray-700 ring-gray-500/20",
+      dot: "bg-gray-500",
+    });
+    expect(getTaskStatusStyle(4)).toEqual({
+      text: "Blocked",
+      theme: "bg-amber-100 text-amber-700 ring-amber-500/20",
+      dot: "bg-amber-500",
+    });
+    expect(getTaskStatusStyle(6)).toEqual({
+      text: "Rejected",
+      theme: "bg-red-100 text-red-700 ring-red-500/20",
+      dot: "bg-red-500",
+    });
+  });
 
-    httpPost.mockResolvedValueOnce(okResponse({ id: "task-1" }));
+  it("returns unknown styles for missing or invalid status (no text key)", () => {
+    const unknown1 = getTaskStatusStyle(undefined);
+    expect(unknown1).toEqual({
+      theme: "bg-zinc-100 text-zinc-700 ring-zinc-500/20",
+      dot: "bg-zinc-500",
+    });
+    expect("text" in unknown1).toBe(false);
 
-    const result = await createEventTask("event-1", config);
-
-    expect(httpPost).toHaveBeenCalledWith(
-      "/system/task/event-1",
-      config
-    );
-    expect(result).toEqual({ id: "task-1" });
+    const unknown2 = getTaskStatusStyle(99 as TaskStatusCode);
+    expect(unknown2).toEqual({
+      theme: "bg-zinc-100 text-zinc-700 ring-zinc-500/20",
+      dot: "bg-zinc-500",
+    });
+    expect("text" in unknown2).toBe(false);
   });
 });
 
-describe("eventTasksApi updateEventTask", () => {
-  it("patches event task config", async () => {
-    const config: EventTaskConfig = {
-      id: "task-2",
-      name: "Update Agenda",
-      description: "Outline",
-      status: 2,
-      startTime: "2024-01-01T10:00:00Z",
-      endTime: null,
-      assignedUserId: "user-1",
-    };
-
-    httpPatch.mockResolvedValueOnce(okResponse({ updated: true }));
-
-    const result = await updateEventTask("event-2", "task-2", config);
-
-    expect(httpPatch).toHaveBeenCalledWith(
-      "/system/task/event-2/task-2",
-      config
-    );
-    expect(result).toEqual({ updated: true });
-  });
-});
-
-describe("eventTasksApi getAssignableMembers", () => {
-  it("parses assignable members payload", async () => {
-    const raw = [
-      {
-        id: "group-1",
-        name: "Volunteers",
-        members: [
-          { id: "user-10", username: "user10" },
-          { id: "user-11", username: "user11" },
-        ],
-      },
+describe("services/eventTask categorizeTasksForBoard", () => {
+  it("categorizes tasks correctly", () => {
+    const tasks: TestTask[] = [
+      makeTask(0),
+      makeTask(1),
+      makeTask(2),
+      makeTask(3),
+      makeTask(4),
+      makeTask(5),
+      makeTask(6),
+      makeTask(99 as TaskStatusCode),
     ];
 
-    httpGet.mockResolvedValueOnce(okResponse(raw));
-
-    const result = await getAssignableMembers("event-3");
-
-    expect(httpGet).toHaveBeenCalledWith(
-      "/system/events/event-3/assignable-members"
+    const buckets = categorizeTasksForBoard(
+      tasks as unknown as Parameters<typeof categorizeTasksForBoard>[0]
     );
-    expect(result[0].members[1].username).toBe("user11");
+
+    expect(buckets.pending).toHaveLength(1);
+    expect(buckets.progress).toHaveLength(1);
+    expect(buckets.completed).toHaveLength(1);
+    expect(buckets.delayed).toHaveLength(1);
+    expect(buckets.blocked).toHaveLength(1);
+    expect(buckets.pendingApproval).toHaveLength(1);
+    expect(buckets.rejected).toHaveLength(1);
+  });
+
+  it("returns empty arrays for empty input", () => {
+    const buckets = categorizeTasksForBoard(
+      [] as unknown as Parameters<typeof categorizeTasksForBoard>[0]
+    );
+    expect(Object.values(buckets).every((arr) => arr.length === 0)).toBe(true);
   });
 });
 
-describe("eventTasksApi sample helpers", () => {
-  it("logs delete sample to console", async () => {
-    const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+describe("services/eventTask filters", () => {
+  const userId = "u1";
 
-    await deleteEventTaskSample();
+  const tasks: TestTask[] = [
+    makeTask(1, { assignedUser: { id: "u1", name: "Alice", groups: [] } }),
+    makeTask(2, { assignedUser: { id: "u2", name: "Bob", groups: [] } }),
+    makeTask(3, { assignerUser: { id: "u1", name: "Alice", groups: [] } }),
+    makeTask(4, { assignerUser: { id: "u2", name: "Bob", groups: [] } }),
+  ];
 
-    expect(logSpy).toHaveBeenCalledWith("deleted");
+  it("filters my tasks correctly", () => {
+    const filtered = filterMyTasks(
+      tasks as unknown as Parameters<typeof filterMyTasks>[0],
+      userId
+    );
+    expect(filtered).toHaveLength(1);
+    expect(filtered[0].assignedUser?.id).toBe(userId);
   });
 
-  it("logs update sample to console", async () => {
-    const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+  it("filters my assigned tasks correctly", () => {
+    const filtered = filterMyAssignedTasks(
+      tasks as unknown as Parameters<typeof filterMyAssignedTasks>[0],
+      userId
+    );
+    expect(filtered).toHaveLength(1);
+    expect(filtered[0].assignerUser?.id).toBe(userId);
+  });
+});
 
-    await updateEventTaskSample();
+describe("services/eventTask getInitialName", () => {
+  it("returns initials from name", () => {
+    expect(getInitialName("John Doe")).toBe("JD");
+    expect(getInitialName("  alice   ")).toBe("A");
+    expect(getInitialName("bob charlie delta")).toBe("BC");
+  });
 
-    expect(logSpy).toHaveBeenCalledWith("updated");
+  it("returns ? for invalid or empty input", () => {
+    expect(getInitialName("")).toBe("?");
+    expect(getInitialName(undefined)).toBe("?");
+    expect(getInitialName(null as unknown as string)).toBe("?");
   });
 });
