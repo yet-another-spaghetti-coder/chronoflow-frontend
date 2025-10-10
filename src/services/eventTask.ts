@@ -1,6 +1,7 @@
 import type {
   EventGroupWithAssignableMembers,
   EventTask,
+  EventTaskConfig,
   EventTaskCreateConfig,
 } from "@/lib/validation/schema";
 
@@ -199,8 +200,8 @@ export const TaskActionEnum = {
 export type TaskActionEnumType =
   (typeof TaskActionEnum)[keyof typeof TaskActionEnum];
 
-//Update action only
-export const allowedUpdateActions = [
+//Update action only for zod schema
+export const allowedActions = [
   TaskActionEnum.ASSIGN,
   TaskActionEnum.UPDATE,
   TaskActionEnum.SUBMIT,
@@ -208,71 +209,281 @@ export const allowedUpdateActions = [
   TaskActionEnum.ACCEPT,
   TaskActionEnum.REJECT,
   TaskActionEnum.APPROVE,
+  TaskActionEnum.DELETE,
 ] as const;
 
-export type UpdateAction = (typeof allowedUpdateActions)[number];
+export type AllowAction = (typeof allowedActions)[number];
 
 // Assignee Task Progress Action;
-export const AssigneeTaskProgressActions = [
-  {
-    label: "Update",
-    value: TaskActionEnum.UPDATE,
-    description: "Make changes to the task’s details or progress information.",
-  },
-  {
-    label: "Submit",
-    value: TaskActionEnum.SUBMIT,
-    description: "Mark the task as completed and submit it for approval.",
-  },
-  {
-    label: "Block",
-    value: TaskActionEnum.BLOCK,
-    description:
-      "Indicate that progress is halted due to an issue or dependency.",
-  },
-] as const;
+export type UpdateActionOption = {
+  label: string;
+  value: AllowAction;
+  description: string;
+};
+export function getStatusUX(
+  status: TaskStatusEnumType | null | undefined,
+  isAssigner: boolean
+): string | null {
+  if (status == null) return null;
 
-export const AssigneeTaskDecisionActions = [
-  {
-    label: "Accept",
-    value: TaskActionEnum.ACCEPT,
-    description: "Acknowledge and approve the submitted work as complete.",
-  },
-  {
-    label: "Reject",
-    value: TaskActionEnum.REJECT,
-    description:
-      "Decline the submitted work and request further updates or corrections.",
-  },
-] as const;
+  if (isAssigner) {
+    switch (status) {
+      case TaskStatusEnum.PENDING:
+        return "Waiting for assignee to accept or reject the task.";
+      case TaskStatusEnum.IN_PROGRESS:
+        return "Assignee is working on this task.";
+      case TaskStatusEnum.DELAYED:
+        return "Task is overdue and pending follow-up.";
+      case TaskStatusEnum.BLOCKED:
+        return "Task is blocked.";
+      case TaskStatusEnum.REJECTED:
+        return "Task was rejected by the assignee and awaits reassignment or update.";
+      case TaskStatusEnum.PENDING_APPROVAL:
+        return "The task has been submitted and is waiting for your review or approval.";
+      case TaskStatusEnum.COMPLETED:
+        return "Task has been completed and approved successfully.";
+      default:
+        return null;
+    }
+  }
 
-export const AssignerTaskActions = [
-  {
-    label: "Assign",
-    value: TaskActionEnum.ASSIGN,
-    description: "Reassign the task to another member or update the assignee.",
-  },
-  {
-    label: "Update",
-    value: TaskActionEnum.UPDATE,
-    description: "Modify task details or adjust deadlines and descriptions.",
-  },
-  {
-    label: "Block",
-    value: TaskActionEnum.BLOCK,
-    description:
-      "Mark the task as blocked due to external dependencies or issues.",
-  },
-] as const;
+  // Assignee side
+  switch (status) {
+    case TaskStatusEnum.PENDING:
+      return "A new task has been assigned to you. Please accept or reject it.";
+    case TaskStatusEnum.IN_PROGRESS:
+      return "You are working on this task.";
+    case TaskStatusEnum.DELAYED:
+      return "This task is overdue.";
+    case TaskStatusEnum.BLOCKED:
+      return "This task is blocked. Your assigner may update the task.";
+    case TaskStatusEnum.REJECTED:
+      return "You have rejected this task. Await further updates from your assigner.";
+    case TaskStatusEnum.PENDING_APPROVAL:
+      return "You’ve submitted the task. Waiting for your assigner’s approval.";
+    case TaskStatusEnum.COMPLETED:
+      return "You have completed this task. No further action required.";
+    default:
+      return null;
+  }
+}
 
-export const AssignerApprovalTaskActions = [
-  {
-    label: "Approve",
-    value: TaskActionEnum.APPROVE,
-    description:
-      "Confirm and approve the task completion after submission by the assignee.",
-  },
-] as const;
+export function getActionOptionsForStatus(
+  status: TaskStatusEnumType | null | undefined,
+  isAssigner: boolean
+): UpdateActionOption[] {
+  if (status == null) return [];
+  if (isAssigner) {
+    switch (status) {
+      case TaskStatusEnum.PENDING:
+        return [
+          {
+            label: "Update",
+            value: TaskActionEnum.UPDATE,
+            description:
+              "Modify task details, deadlines, or attachments before acceptance.",
+          },
+          {
+            label: "Delete",
+            value: TaskActionEnum.DELETE,
+            description:
+              "Remove this task if it was created by mistake or is no longer needed.",
+          },
+          {
+            label: "Assign",
+            value: TaskActionEnum.ASSIGN,
+            description:
+              "Reassign the task to another member or back to the same assignee after updates.",
+          },
+        ];
+
+      case TaskStatusEnum.IN_PROGRESS:
+        return [
+          {
+            label: "Update",
+            value: TaskActionEnum.UPDATE,
+            description: "Modify task details, deadlines, or attachments.",
+          },
+          {
+            label: "Block",
+            value: TaskActionEnum.BLOCK,
+            description:
+              "Mark the task as blocked due to external dependencies or issues.",
+          },
+          {
+            label: "Delete",
+            value: TaskActionEnum.DELETE,
+            description:
+              "Remove this task if it’s no longer required. This action is irreversible.",
+          },
+          {
+            label: "Assign",
+            value: TaskActionEnum.ASSIGN,
+            description:
+              "Reassign the task to another member or back to the same assignee after updates.",
+          },
+        ];
+
+      case TaskStatusEnum.DELAYED:
+        return [
+          {
+            label: "Update",
+            value: TaskActionEnum.UPDATE,
+            description: "Revise deadlines or add remarks about the delay.",
+          },
+          {
+            label: "Block",
+            value: TaskActionEnum.BLOCK,
+            description:
+              "Mark the task as blocked due to external issues or missing dependencies.",
+          },
+          {
+            label: "Delete",
+            value: TaskActionEnum.DELETE,
+            description:
+              "Remove this task if it’s no longer relevant after the delay.",
+          },
+          {
+            label: "Assign",
+            value: TaskActionEnum.ASSIGN,
+            description:
+              "Reassign the task to another member or back to the same assignee after updates.",
+          },
+        ];
+
+      case TaskStatusEnum.BLOCKED:
+        return [
+          {
+            label: "Update",
+            value: TaskActionEnum.UPDATE,
+            description:
+              "Update details or resolve the blocker (e.g., adjust scope, deadlines, or dependencies).",
+          },
+          {
+            label: "Delete",
+            value: TaskActionEnum.DELETE,
+            description: "Remove this task if it’s no longer required.",
+          },
+          {
+            label: "Assign",
+            value: TaskActionEnum.ASSIGN,
+            description:
+              "Reassign the task to another member or back to the same assignee after updates.",
+          },
+        ];
+
+      case TaskStatusEnum.REJECTED:
+        return [
+          {
+            label: "Update",
+            value: TaskActionEnum.UPDATE,
+            description:
+              "Review and modify task details or clarify requirements before reassignment.",
+          },
+          {
+            label: "Assign",
+            value: TaskActionEnum.ASSIGN,
+            description:
+              "Reassign the task to another member or back to the same assignee after updates.",
+          },
+          {
+            label: "Delete",
+            value: TaskActionEnum.DELETE,
+            description:
+              "Remove this task if it’s no longer relevant after rejection.",
+          },
+        ];
+
+      case TaskStatusEnum.PENDING_APPROVAL:
+        return [
+          {
+            label: "Approve",
+            value: TaskActionEnum.APPROVE,
+            description: "Confirm that the task is completed.",
+          },
+        ];
+
+      case TaskStatusEnum.COMPLETED:
+        return [
+          {
+            label: "Delete",
+            value: TaskActionEnum.DELETE,
+            description:
+              "Remove this completed task if it’s no longer needed for record-keeping.",
+          },
+        ];
+
+      default:
+        return [];
+    }
+  } else {
+    // Assignee
+    switch (status) {
+      case TaskStatusEnum.PENDING:
+        return [
+          {
+            label: "Accept",
+            value: TaskActionEnum.ACCEPT,
+            description:
+              "Acknowledge and accept this task assignment to begin work.",
+          },
+          {
+            label: "Reject",
+            value: TaskActionEnum.REJECT,
+            description:
+              "Decline this task assignment if it’s invalid or not applicable.",
+          },
+        ];
+
+      case TaskStatusEnum.IN_PROGRESS:
+        return [
+          {
+            label: "Submit",
+            value: TaskActionEnum.SUBMIT,
+            description:
+              "Mark the task as completed and submit it for approval.",
+          },
+          {
+            label: "Block",
+            value: TaskActionEnum.BLOCK,
+            description:
+              "Indicate that progress is halted due to an issue or dependency.",
+          },
+        ];
+
+      case TaskStatusEnum.DELAYED:
+        return [
+          {
+            label: "Submit",
+            value: TaskActionEnum.SUBMIT,
+            description:
+              "Submit the task for approval if it’s now completed despite the delay.",
+          },
+          {
+            label: "Block",
+            value: TaskActionEnum.BLOCK,
+            description:
+              "Report that progress is halted due to an ongoing issue or dependency.",
+          },
+        ];
+
+      case TaskStatusEnum.BLOCKED:
+        return [];
+
+      case TaskStatusEnum.REJECTED:
+        return [];
+
+      case TaskStatusEnum.PENDING_APPROVAL:
+        return [];
+
+      case TaskStatusEnum.COMPLETED:
+        return [];
+
+      default:
+        return [];
+    }
+  }
+}
 
 /* ──────────────────────────────────────────────────────────────────────────────
  *  Assignee Member Options for Select Input
@@ -334,4 +545,116 @@ export function buildTaskCreateFormData(
     for (const f of input.files) form.append("files", f, f.name);
   }
   return form;
+}
+
+export function buildTaskConfigFormData(input: EventTaskConfig): FormData {
+  const form = new FormData();
+
+  // Only append fields if provided (backend treats all as optional)
+  if (input.name != null) form.append("name", input.name);
+  if (input.description != null) form.append("description", input.description);
+
+  // type: integer enum (ASSIGN/UPDATE/SUBMIT/BLOCK/ACCEPT/REJECT/APPROVE)
+  if (typeof input.type === "number") {
+    form.append("type", String(input.type));
+  }
+
+  // targetUserId: backend expects Long; send as string if present
+  if (input.targetUserId) {
+    form.append("targetUserId", String(input.targetUserId));
+  }
+
+  // LocalDateTime (no timezone/offset)
+  const start = fmtLocal(input.startTime);
+  const end = fmtLocal(input.endTime);
+  if (start) form.append("startTime", start);
+  if (end) form.append("endTime", end);
+
+  // files
+  if (input.files?.length) {
+    for (const f of input.files) {
+      form.append("files", f, f.name);
+    }
+  }
+
+  return form;
+}
+
+// Task log
+export const ACTION_META: Record<
+  keyof typeof TaskActionEnum,
+  { label: string; theme: string }
+> = {
+  CREATE: {
+    label: "Created",
+    theme: "bg-gray-100 text-gray-700 ring-1 ring-gray-200",
+  },
+  ASSIGN: {
+    label: "Assigned",
+    theme: "bg-indigo-100 text-indigo-700 ring-1 ring-indigo-200",
+  },
+  DELETE: {
+    label: "Deleted",
+    theme: "bg-rose-100 text-rose-700 ring-1 ring-rose-200",
+  },
+  UPDATE: {
+    label: "Updated",
+    theme: "bg-cyan-100 text-cyan-700 ring-1 ring-cyan-200",
+  },
+  SUBMIT: {
+    label: "Submitted",
+    theme: "bg-blue-100 text-blue-700 ring-1 ring-blue-200",
+  },
+  BLOCK: {
+    label: "Blocked",
+    theme: "bg-amber-100 text-amber-700 ring-1 ring-amber-200",
+  },
+  ACCEPT: {
+    label: "Accepted",
+    theme: "bg-emerald-100 text-emerald-700 ring-1 ring-emerald-200",
+  },
+  REJECT: {
+    label: "Rejected",
+    theme: "bg-red-100 text-red-700 ring-1 ring-red-200",
+  },
+  APPROVE: {
+    label: "Approved",
+    theme: "bg-green-100 text-green-700 ring-1 ring-green-200",
+  },
+};
+
+export function getActionMeta(action: number) {
+  const key = Object.entries(TaskActionEnum).find(
+    ([, code]) => code === action
+  )?.[0] as keyof typeof TaskActionEnum | undefined;
+  if (!key)
+    return {
+      label: `Action ${action}`,
+      theme: "bg-muted text-foreground/70 ring-1 ring-border",
+    };
+  return ACTION_META[key];
+}
+
+export function formatDT(s: string) {
+  const d = new Date(s);
+  if (Number.isNaN(d.getTime())) return s;
+  return d.toLocaleString(undefined, {
+    year: "numeric",
+    month: "short",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+  });
+}
+
+export function formatFileBytes(n: number) {
+  if (!Number.isFinite(n)) return `${n} bytes`;
+  const units = ["bytes", "KB", "MB", "GB"];
+  let idx = 0;
+  while (n >= 1024 && idx < units.length - 1) {
+    n /= 1024;
+    idx++;
+  }
+  return `${n.toFixed(idx === 0 ? 0 : 1)} ${units[idx]}`;
 }

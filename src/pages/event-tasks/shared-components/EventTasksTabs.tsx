@@ -5,6 +5,7 @@ import { AllTasksTab } from "../all-task-tab";
 import { MyTaskTab } from "../my-task-tab";
 import { MyAssignTaskTab } from "../my-assign-task";
 import TaskConfigCreateFormModal from "./TaskConfigCreateForm";
+import { Button } from "@/components/ui/button";
 
 export function EventTasksTabs() {
   const [active, setActive] = useState<"all" | "mine">("all");
@@ -59,11 +60,20 @@ export function EventTasksTabs() {
       onTabChange={(v) => setActive(v as typeof active)}
       mountStrategy="lazy"
       headerRight={
-        <TaskConfigCreateFormModal
-          eventId={eventId ?? ""}
-          onRefresh={onRefresh}
-          assigneeOptions={assignableMembers}
-        />
+        eventId ? (
+          <TaskConfigCreateFormModal
+            eventId={eventId}
+            onRefresh={onRefresh}
+            assigneeOptions={assignableMembers}
+          />
+        ) : (
+          <div className="flex items-center gap-2">
+            <Button disabled>Create task</Button>
+            <span className="text-xs text-muted-foreground">
+              Select an event to create tasks
+            </span>
+          </div>
+        )
       }
     />
   );

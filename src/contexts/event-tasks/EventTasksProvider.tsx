@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useCallback } from "react";
 import { useEventTasks } from "@/hooks/event-tasks/useEventTasks";
 import { useAssignableMembers } from "@/hooks/event-tasks/useAssignableMembers";
 import { TasksContext, type TasksContextValue } from "./useEventTasksContext";
@@ -21,17 +21,25 @@ export function TasksProvider({
   autoFetch = false,
   children,
 }: TasksProviderProps) {
-  const { tasks, loading, error, onRefresh } = useEventTasks(
+  const {
+    tasks,
+    loading,
+    error,
+    onRefresh: onRefreshTasks,
+  } = useEventTasks(eventId, autoFetch);
+  const { groups, onRefresh: onRefreshMembers } = useAssignableMembers(
     eventId,
     autoFetch
   );
-  const { groups } = useAssignableMembers(eventId, autoFetch);
   const currentUserId = useAuthStore((s) => s.user?.id ?? "");
 
-  const value: TasksContextValue = useMemo(() => {
+  const onRefresh = useCallback(async () => {
+    await Promise.all([onRefreshTasks(), onRefreshMembers()]);
+  }, [onRefreshTasks, onRefreshMembers]);
+
+  const value: TasksContextValue = React.useMemo(() => {
     const myTasks = filterMyTasks(tasks, currentUserId);
     const myAssignedTasks = filterMyAssignedTasks(tasks, currentUserId);
-
     const assignableMembers: AssigneeOption[] =
       getAssignableMembersOptions(groups);
 

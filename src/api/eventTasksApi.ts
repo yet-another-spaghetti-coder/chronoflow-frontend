@@ -3,11 +3,17 @@ import { http } from "@/lib/http";
 import {
   assignableMembersResponseSchema,
   eventTaskListSchema,
+  taskLogResponseSchema,
   type EventGroupWithAssignableMembers,
   type EventTask,
+  type EventTaskConfig,
   type EventTaskCreateConfig,
+  type TaskLog,
 } from "@/lib/validation/schema";
-import { buildTaskCreateFormData } from "@/services/eventTask";
+import {
+  buildTaskCreateFormData,
+  buildTaskConfigFormData,
+} from "@/services/eventTask";
 
 export async function getEventTasks(eventId: string): Promise<EventTask[]> {
   const res = await http.get(`/system/task/${eventId}`);
@@ -29,11 +35,16 @@ export async function createEventTask(
 }
 
 export async function updateEventTask(
-  eventId: string,
-  taskId: string,
-  input: EventTaskCreateConfig
+  eventId: string | number,
+  taskId: string | number,
+  input: EventTaskConfig
 ) {
-  const res = await http.patch(`/system/task/${eventId}/${taskId}`, input);
+  const form = buildTaskConfigFormData(input);
+
+  const res = await http.patch(`/system/task/${eventId}/${taskId}`, form, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+
   return unwrap(res.data);
 }
 
@@ -45,10 +56,19 @@ export async function getAssignableMembers(
   return assignableMembersResponseSchema.parse(raw);
 }
 
-export async function deleteEventTaskSample() {
-  console.log("deleted");
+export async function deleteEventTask(
+  eventId: string | number,
+  taskId: string | number
+) {
+  const res = await http.delete(`/system/task/${eventId}/${taskId}`);
+  return unwrap(res.data);
 }
 
-export async function updateEventTaskSample() {
-  console.log("updated");
+export async function getEventTaskLogs(
+  eventId: string | number,
+  taskId: string | number
+): Promise<TaskLog[]> {
+  const res = await http.get(`/system/task/${eventId}/log/${taskId}`);
+  const data = unwrap(res.data);
+  return taskLogResponseSchema.parse(data);
 }

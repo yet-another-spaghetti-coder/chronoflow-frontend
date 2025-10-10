@@ -28,7 +28,6 @@ import {
 } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
 import Swal from "sweetalert2";
-
 import {
   eventTaskCreateConfigSchema,
   type EventTaskCreateConfig,
@@ -60,7 +59,7 @@ export default function TaskConfigCreateFormModal({
       description: "",
       startTime: undefined,
       endTime: undefined,
-      targetUserId: "", 
+      targetUserId: "",
       files: undefined,
     },
   });
@@ -248,7 +247,7 @@ export default function TaskConfigCreateFormModal({
                                     key={opt.id}
                                     value={opt.label}
                                     onSelect={() => {
-                                      field.onChange(opt.id); // keep as string
+                                      field.onChange(opt.id);
                                       setAssigneeOpen(false);
                                     }}
                                     className="cursor-pointer"

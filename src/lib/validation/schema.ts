@@ -1,4 +1,8 @@
-import { allowedUpdateActions, type UpdateAction } from "@/services/eventTask";
+import {
+  allowedActions,
+  TaskActionEnum,
+  type AllowAction,
+} from "@/services/eventTask";
 import { z } from "zod";
 
 //Login
@@ -394,6 +398,7 @@ export const eventTaskSchema = z.object({
 export const eventTaskListSchema = z.array(eventTaskSchema);
 export type EventTask = z.infer<typeof eventTaskSchema>;
 
+// event task create config
 export const eventTaskCreateConfigSchema = z
   .object({
     id: z.string().optional(),
@@ -430,9 +435,9 @@ export const eventTaskConfigSchema = z
     description: z.string().trim().optional().nullable(),
     type: z
       .union(
-        allowedUpdateActions.map((a) => z.literal(a)) as [
-          z.ZodLiteral<UpdateAction>,
-          ...z.ZodLiteral<UpdateAction>[]
+        allowedActions.map((a) => z.literal(a)) as [
+          z.ZodLiteral<AllowAction>,
+          ...z.ZodLiteral<AllowAction>[]
         ]
       )
       .optional()
@@ -456,6 +461,12 @@ export const eventTaskConfigSchema = z
 
 export type EventTaskConfig = z.infer<typeof eventTaskConfigSchema>;
 
+//Reassign event task
+export const reAssignSchema = z.object({
+  targetUserId: z.string().min(1, "Please select a member"),
+});
+export type ReAssignFormType = z.infer<typeof reAssignSchema>;
+
 //Assignable members for event tasks
 export const assignableMemberSchema = z.object({
   id: z.string(),
@@ -478,6 +489,43 @@ export type EventGroupWithAssignableMembers = z.infer<
 >;
 
 //Event task log
+/** Back-end returns LocalDateTime without timezone (e.g. 2025-10-11T02:49:04) */
+const localDateTimeString = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/, "Invalid LocalDateTime");
+
+/** FileResult */
+export const fileResultSchema = z.object({
+  objectName: z.string(),
+  name: z.string(),
+  contentType: z.string(),
+  size: z.string(),
+  signedUrl: z.string(),
+});
+
+export const taskLogUserSchema = z.object({
+  id: z.string(),
+  name: z.string().nullable().optional(),
+  email: z.email().nullable().optional(),
+});
+
+/** TaskLogResponse */
+export const taskLogSchema = z.object({
+  id: z.string(),
+  action: z.enum(TaskActionEnum),
+  targetUser: taskLogUserSchema.nullable().optional(),
+  sourceUser: taskLogUserSchema.nullable().optional(),
+  createTime: localDateTimeString,
+  fileResults: z.array(fileResultSchema).optional().default([]),
+});
+
+/** Response wrapper*/
+export const taskLogResponseSchema = z.array(taskLogSchema);
+
+export type FileResult = z.infer<typeof fileResultSchema>;
+export type TaskLogUser = z.infer<typeof taskLogUserSchema>;
+export type TaskLog = z.infer<typeof taskLogSchema>;
+export type TaskLogListResponse = z.infer<typeof taskLogResponseSchema>;
 
 //Attendees
 export const attendeeSchema = z.object({
