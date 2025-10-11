@@ -9,6 +9,7 @@ export type TasksContextValue = {
   loading: boolean;
   error: string | null;
   onRefresh: () => Promise<void>;
+  refreshMembers: () => Promise<void>;
   eventId: string | null;
   assignableMembers: AssigneeOption[];
 };

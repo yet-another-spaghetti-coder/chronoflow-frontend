@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 export function EventTasksTabs() {
   const [active, setActive] = useState<"all" | "mine">("all");
 
-  const { eventId, loading, error, onRefresh, assignableMembers } =
+  const { eventId, loading, error, onRefresh, assignableMembers} =
     useEventTasksContext();
 
   const tabs: TabItem[] = useMemo(

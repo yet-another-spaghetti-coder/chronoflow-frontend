@@ -37,7 +37,6 @@ import TaskLogModal from "./TaskLogPanel";
 type TaskCardProps = { task: EventTask };
 
 export function TaskCard({ task }: TaskCardProps) {
-  console.log("Rendering TaskCard for task:", task);
   const { eventId, onRefresh, assignableMembers, loading } =
     useEventTasksContext();
   const currentUserId = useAuthStore((s) => s.user?.id ?? "");

@@ -37,6 +37,10 @@ export function TasksProvider({
     await Promise.all([onRefreshTasks(), onRefreshMembers()]);
   }, [onRefreshTasks, onRefreshMembers]);
 
+  const refreshMembers = useCallback(async () => {
+    await onRefreshMembers();
+  }, [onRefreshMembers]);
+
   const value: TasksContextValue = React.useMemo(() => {
     const myTasks = filterMyTasks(tasks, currentUserId);
     const myAssignedTasks = filterMyAssignedTasks(tasks, currentUserId);
@@ -50,6 +54,7 @@ export function TasksProvider({
       loading,
       error,
       onRefresh,
+      refreshMembers,
       eventId,
       assignableMembers,
     };

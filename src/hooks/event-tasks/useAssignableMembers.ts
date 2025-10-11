@@ -1,4 +1,4 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useCallback, useEffect, useState } from "react";
 import { getAssignableMembers } from "@/api/eventTasksApi";
 import type { EventGroupWithAssignableMembers } from "@/lib/validation/schema";
 
@@ -13,33 +13,34 @@ export function useAssignableMembers(
   eventId: string | null,
   autoFetch: boolean = false
 ): UseAssignableMembersType {
-  const queryClient = useQueryClient();
+  const [groups, setGroups] = useState<EventGroupWithAssignableMembers[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const query = useQuery<EventGroupWithAssignableMembers[], Error>({
-    queryKey: ["assignableMembers", eventId],
-    queryFn: () => {
-      if (!eventId) return Promise.resolve([]);
-      return getAssignableMembers(eventId);
-    },
-    enabled: autoFetch && !!eventId,
-    staleTime: Infinity,
-    gcTime: 30 * 60 * 1000,
-    refetchOnMount: true,
-    refetchOnWindowFocus: false,
-    refetchOnReconnect: false,
-  });
+  const fetchMembers = useCallback(async () => {
+    if (!eventId) {
+      setGroups([]);
+      setError("No event selected");
+      return;
+    }
 
-  const onRefresh = async () => {
-    if (!eventId) return;
-    await queryClient.invalidateQueries({
-      queryKey: ["assignableMembers", eventId],
-    });
-  };
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await getAssignableMembers(eventId);
+      setGroups(data);
+    } catch (e: unknown) {
+      if (e instanceof Error) setError(e.message);
+      else setError("Failed to load members");
+      setGroups([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [eventId]);
 
-  return {
-    groups: query.data ?? [],
-    loading: query.isLoading || query.isFetching,
-    error: query.error ? query.error.message : null,
-    onRefresh,
-  };
+  useEffect(() => {
+    if (autoFetch && eventId) void fetchMembers();
+  }, [autoFetch, eventId, fetchMembers]);
+
+  return { groups, loading, error, onRefresh: fetchMembers };
 }

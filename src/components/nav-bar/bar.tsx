@@ -17,8 +17,6 @@ export function Navbar({ brand }: NavbarProps) {
   const [evt, setEvt] = useState<OrgEvent | null>(null);
   const [loading, setLoading] = useState(false);
 
-  console.log(evt);
-
   useEffect(() => {
     let cancelled = false;
     if (!eventId) {
