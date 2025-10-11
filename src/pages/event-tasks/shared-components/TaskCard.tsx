@@ -318,20 +318,32 @@ export function TaskCard({ task }: TaskCardProps) {
                     // ASSIGN → placeholder for now (still occupies a grid cell)
                     if (a.value === TaskActionEnum.ASSIGN && eventId) {
                       return (
-                        <TaskReassignModal
-                          key={a.value}
-                          eventId={eventId}
-                          taskId={task.id}
-                          onRefresh={onRefresh}
-                          options={assignableMembers}
-                          initialUserId={task.assignedUser?.id ?? ""}
-                          trigger={
-                            <button className="btn w-full sm:w-auto h-10 rounded-md px-4 border">
-                              {a.label}
-                            </button>
-                          }
-                          triggerLabel={a.label}
-                        />
+                        <Tooltip key={a.value}>
+                          <TooltipTrigger asChild>
+                            {/* Make the internal DialogTrigger button fill this cell */}
+                            <div className="w-full [&>button]:w-full [&>button]:h-10">
+                              <TaskReassignModal
+                                key={a.value}
+                                eventId={eventId}
+                                taskId={task.id}
+                                onRefresh={onRefresh}
+                                options={assignableMembers}
+                                initialUserId={task.assignedUser?.id ?? ""}
+                                trigger={
+                                  <button className="btn w-full sm:w-auto h-10 rounded-md px-4 border">
+                                    {a.label}
+                                  </button>
+                                }
+                                triggerLabel={a.label}
+                              />
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent side="top" className="max-w-[260px]">
+                            <p className="text-xs whitespace-pre-line">
+                              {a.description}
+                            </p>
+                          </TooltipContent>
+                        </Tooltip>
                       );
                     }
 
