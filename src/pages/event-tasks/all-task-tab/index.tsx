@@ -9,10 +9,6 @@ export function AllTasksTab() {
     if (loading)
       return <p className="text-sm text-muted-foreground">Loading tasks…</p>;
     if (error) return <p className="text-sm text-red-500">{error}</p>;
-    if (allTasks.length === 0)
-      return (
-        <p className="text-sm text-muted-foreground">No tasks available.</p>
-      );
     return <TasksKanban tasks={allTasks} />;
   };
 
