@@ -8,7 +8,7 @@ import {
 } from "@/lib/validation/schema";
 
 export async function getMembers(): Promise<Member[]> {
-  const res = await http.get("/organizer/users");
+  const res = await http.get("/users/organizer/users");
   const raw = unwrap<Member[]>(res.data);
   return MembersResponseSchema.parse(raw);
 }
@@ -19,7 +19,7 @@ export async function uploadMembersExcel(
   const form = new FormData();
   form.append("file", file, file.name);
 
-  const res = await http.post("/organizer/users/bulk-upsert", form, {
+  const res = await http.post("/users/organizer/users/bulk-upsert", form, {
     headers: { "Content-Type": "multipart/form-data" },
   });
   return unwrap<MemberBulkUpsertResult>(res.data);
@@ -32,19 +32,19 @@ const toPayload = (input: MemberConfig) => ({
 });
 
 export async function createMember(input: MemberConfig) {
-  const res = await http.post("/organizer/create/user", toPayload(input));
+  const res = await http.post("/users/organizer/create/user", toPayload(input));
   return unwrap(res.data);
 }
 
 export async function updateMember(id: string, input: MemberConfig) {
   const res = await http.patch(
-    `/organizer/update/user/${id}`,
+    `/users/organizer/update/user/${id}`,
     toPayload(input)
   );
   return unwrap(res.data);
 }
 
 export async function deleteMember(id: string) {
-  const res = await http.delete(`/organizer/delete/user/${id}`);
+  const res = await http.delete(`/users/organizer/delete/user/${id}`);
   return unwrap(res.data);
 }

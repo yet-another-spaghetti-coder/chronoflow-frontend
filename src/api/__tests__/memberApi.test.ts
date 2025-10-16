@@ -56,7 +56,7 @@ describe("memberApi getMembers", () => {
 
     const result = await getMembers();
 
-    expect(httpGet).toHaveBeenCalledWith("/organizer/users");
+    expect(httpGet).toHaveBeenCalledWith("/users/organizer/users");
     expect(result[0].email).toBe("member@example.com");
   });
 });
@@ -95,13 +95,10 @@ describe("memberApi createMember", () => {
 
     const response = await createMember(config);
 
-    expect(httpPost).toHaveBeenCalledWith(
-      "/organizer/create/user",
-      {
-        email: "new@example.com",
-        roleIds: ["role-1"],
-      }
-    );
+    expect(httpPost).toHaveBeenCalledWith("/users/organizer/create/user", {
+      email: "new@example.com",
+      roleIds: ["role-1"],
+    });
     expect(response).toEqual({ id: "member-1" });
   });
 });
@@ -119,7 +116,7 @@ describe("memberApi updateMember", () => {
     const result = await updateMember("member-9", config);
 
     expect(httpPatch).toHaveBeenCalledWith(
-      "/organizer/update/user/member-9",
+      "/users/organizer/update/user/member-9",
       {
         email: "update@example.com",
         roleIds: ["role-2"],
@@ -136,7 +133,9 @@ describe("memberApi deleteMember", () => {
 
     const result = await deleteMember("member-5");
 
-    expect(httpDelete).toHaveBeenCalledWith("/organizer/delete/user/member-5");
+    expect(httpDelete).toHaveBeenCalledWith(
+      "/users/organizer/delete/user/member-5"
+    );
     expect(result).toBe(true);
   });
 });

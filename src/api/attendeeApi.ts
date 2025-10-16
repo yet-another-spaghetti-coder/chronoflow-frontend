@@ -10,7 +10,7 @@ export async function getAttendees(
   eventId: string | number
 ): Promise<Attendee[]> {
   const res = await http.get(
-    `/system/attendee/list/${encodeURIComponent(String(eventId))}`
+    `/attendees/list/${encodeURIComponent(String(eventId))}`
   );
   const raw = unwrap<Attendee[]>(res.data);
   return attendeesResponseSchema.parse(raw);
@@ -25,7 +25,7 @@ export async function createIndividualAttendee(
     attendees: [input],
   });
 
-  const res = await http.post("/system/attendee", toPayload(input));
+  const res = await http.post("/attendees", toPayload(input));
   return unwrap(res.data);
 }
 
@@ -33,7 +33,7 @@ export async function updateAttendee(
   attendeeId: string | number,
   input: IndiAttendeeConfig
 ) {
-  const res = await http.patch(`/system/attendee/${attendeeId}`, {
+  const res = await http.patch(`/attendees/${attendeeId}`, {
     email: input.email,
     name: input.name,
     mobile: input.mobile,
@@ -48,7 +48,7 @@ export async function uploadAttendeesExcel(
   const form = new FormData();
   form.append("file", file, file.name);
 
-  const res = await http.post(`/system/attendee/bulk/${eventId}`, form, {
+  const res = await http.post(`/attendees/bulk/${eventId}`, form, {
     headers: { "Content-Type": "multipart/form-data" },
   });
 
@@ -58,6 +58,6 @@ export async function uploadAttendeesExcel(
 export async function deleteAttendee(
   attendeeId: string | number
 ): Promise<boolean> {
-  const res = await http.delete(`/system/attendee/${attendeeId}`);
+  const res = await http.delete(`/attendees/${attendeeId}`);
   return unwrap<boolean>(res.data);
 }

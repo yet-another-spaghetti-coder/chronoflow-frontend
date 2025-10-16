@@ -8,13 +8,13 @@ import {
 } from "@/lib/validation/schema";
 
 export async function getEvents(): Promise<OrgEvent[]> {
-  const res = await http.get("/system/events");
+  const res = await http.get("/events");
   const raw = unwrap<OrgEvent[]>(res.data);
   return OrgEventsResponseSchema.parse(raw);
 }
 
 export async function getEventById(id: string | number): Promise<OrgEvent> {
-  const res = await http.get(`/system/events/${id}`);
+  const res = await http.get(`/events/${id}`);
   const raw = unwrap(res.data);
   return OrgEventSchema.parse(raw);
 }
@@ -36,16 +36,16 @@ const toPayload = (input: EventConfig) => {
 };
 
 export async function createEvent(input: EventConfig) {
-  const res = await http.post("/system/events", toPayload(input));
+  const res = await http.post("/events", toPayload(input));
   return unwrap(res.data);
 }
 
 export async function updateEvent(id: string, input: EventConfig) {
-  const res = await http.patch(`/system/events/${id}`, toPayload(input));
+  const res = await http.patch(`/events/${id}`, toPayload(input));
   return unwrap(res.data);
 }
 
 export async function deleteEvent(id: string) {
-  const res = await http.delete(`/system/events/${id}`);
+  const res = await http.delete(`/events/${id}`);
   return unwrap(res.data);
 }

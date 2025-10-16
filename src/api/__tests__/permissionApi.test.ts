@@ -47,7 +47,7 @@ describe("permissionApi getPermissions", () => {
 
     const result = await getPermissions();
 
-    expect(httpGet).toHaveBeenCalledWith("/system/permissions");
+    expect(httpGet).toHaveBeenCalledWith("/users/permissions");
     expect(result[0].name).toBe("View");
   });
 });
@@ -63,7 +63,7 @@ describe("permissionApi createPermission", () => {
 
     const result = await createPermission(config);
 
-    expect(httpPost).toHaveBeenCalledWith("/system/permissions", config);
+    expect(httpPost).toHaveBeenCalledWith("/users/permissions", config);
     expect(result).toEqual({ id: "p2" });
   });
 });
@@ -79,10 +79,7 @@ describe("permissionApi updatePermission", () => {
 
     const result = await updatePermission("perm-1", config);
 
-    expect(httpPatch).toHaveBeenCalledWith(
-      "/system/permissions/perm-1",
-      config
-    );
+    expect(httpPatch).toHaveBeenCalledWith("/users/permissions/perm-1", config);
     expect(result).toEqual({ updated: true });
   });
 });
@@ -93,7 +90,7 @@ describe("permissionApi deletePermission", () => {
 
     const result = await deletePermission("perm-9");
 
-    expect(httpDelete).toHaveBeenCalledWith("/system/permissions/perm-9");
+    expect(httpDelete).toHaveBeenCalledWith("/users/permissions/perm-9");
     expect(result).toBe(true);
   });
 });

@@ -6,7 +6,7 @@ import {
 } from "@/lib/validation/schema";
 
 export async function getMemberDashboard(): Promise<MemberDashboard> {
-  const res = await http.get("/system/task/dashboard");
+  const res = await http.get("/tasks/dashboard");
   const raw = unwrap<unknown>(res.data);
   return MemberDashboardSchema.parse(raw);
 }

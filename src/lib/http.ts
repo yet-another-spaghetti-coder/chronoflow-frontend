@@ -17,7 +17,7 @@ http.defaults.xsrfHeaderName = "X-XSRF-TOKEN";
 const isLoginPath = (url?: string) => {
   if (!url) return false;
   const p = url.startsWith("http") ? new URL(url).pathname : url;
-  return /^\/system\/auth\/login(\/|$)/.test(p);
+  return /^\/users\/auth\/login(\/|$)/.test(p);
 };
 
 http.interceptors.request.use((config) => {

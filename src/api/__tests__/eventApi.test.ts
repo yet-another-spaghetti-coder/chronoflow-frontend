@@ -22,12 +22,7 @@ const httpPost = httpMock.post;
 const httpPatch = httpMock.patch;
 const httpDelete = httpMock.delete;
 
-import {
-  createEvent,
-  deleteEvent,
-  getEvents,
-  updateEvent,
-} from "../eventApi";
+import { createEvent, deleteEvent, getEvents, updateEvent } from "../eventApi";
 
 beforeEach(() => {
   httpGet.mockReset();
@@ -60,7 +55,7 @@ describe("eventApi getEvents", () => {
 
     const events = await getEvents();
 
-    expect(httpGet).toHaveBeenCalledWith("/system/events");
+    expect(httpGet).toHaveBeenCalledWith("/events");
     expect(events[0].startTime).toBeInstanceOf(Date);
     expect(events[0].name).toBe("Launch Day");
   });
@@ -123,7 +118,7 @@ describe("eventApi updateEvent", () => {
     const data = await updateEvent("event-1", config);
 
     expect(httpPatch).toHaveBeenCalledWith(
-      "/system/events/event-1",
+      "/events/event-1",
       expect.objectContaining({
         name: "Updated",
         startTime: "2024-07-01T10:00:00Z",
@@ -139,7 +134,7 @@ describe("eventApi deleteEvent", () => {
 
     const result = await deleteEvent("event-2");
 
-    expect(httpDelete).toHaveBeenCalledWith("/system/events/event-2");
+    expect(httpDelete).toHaveBeenCalledWith("/events/event-2");
     expect(result).toBe(true);
   });
 });

@@ -24,7 +24,7 @@ export async function registerOrganizer(
     organizationAddress: input.organisation_address,
   };
 
-  const res = await http.post("/system/reg/organizer", payload);
+  const res = await http.post("/users/reg/organizer", payload);
   return unwrap<boolean>(res.data);
 }
 
@@ -37,7 +37,7 @@ export async function registerMember(
     password: input.user_password,
     phone: input.user_mobile,
   };
-  const res = await http.post("/system/reg/member", payload);
+  const res = await http.post("/users/reg/member", payload);
   return unwrap<boolean>(res.data);
 }
 
@@ -49,7 +49,7 @@ export async function getTenantMemberInfo(
     userId: input.user_id,
   };
 
-  const res = await http.post("/system/reg/search", payload);
+  const res = await http.post("/users/reg/search", payload);
   const raw = unwrap<MemberPrefillResponse>(res.data);
   const body = MemberPrefillResponseSchema.parse(raw);
 

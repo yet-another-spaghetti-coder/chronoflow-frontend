@@ -27,7 +27,7 @@ describe("groupApi", () => {
       const result = await groupApi.getGroupsByEvent("evt_001");
 
       expect(http.get).toHaveBeenCalledWith(
-        "/system/group/list?eventId=evt_001"
+        "/events/groups/list?eventId=evt_001"
       );
       expect(result).toEqual(mockData.data);
     });
@@ -59,7 +59,7 @@ describe("groupApi", () => {
 
       const result = await groupApi.createGroup(input);
 
-      expect(http.post).toHaveBeenCalledWith("/system/group/create", {
+      expect(http.post).toHaveBeenCalledWith("/events/groups/create", {
         name: "New Group",
         eventId: "evt_001",
         leadUserId: "user_001",
@@ -87,7 +87,7 @@ describe("groupApi", () => {
 
       await groupApi.updateGroup("grp_001", input);
 
-      expect(http.put).toHaveBeenCalledWith("/system/group/update", {
+      expect(http.put).toHaveBeenCalledWith("/events/groups/update", {
         id: "grp_001",
         name: "Updated Group",
         leadUserId: "user_002",
@@ -106,7 +106,7 @@ describe("groupApi", () => {
 
       await groupApi.deleteGroup("grp_001");
 
-      expect(http.delete).toHaveBeenCalledWith("/system/group/delete/grp_001");
+      expect(http.delete).toHaveBeenCalledWith("/events/groups/delete/grp_001");
     });
   });
 
@@ -135,7 +135,7 @@ describe("groupApi", () => {
 
       const result = await groupApi.getGroupMembers("grp_001");
 
-      expect(http.get).toHaveBeenCalledWith("/system/group/grp_001/members");
+      expect(http.get).toHaveBeenCalledWith("/events/groups/grp_001/members");
       expect(result).toEqual(mockData.data);
     });
 
@@ -160,7 +160,7 @@ describe("groupApi", () => {
       const result = await groupApi.addMemberToGroup("grp_001", "user_001");
 
       expect(http.post).toHaveBeenCalledWith(
-        "/system/group/grp_001/members/user_001"
+        "/events/groups/grp_001/members/user_001"
       );
       expect(result).toEqual({ success: true });
     });
@@ -189,7 +189,7 @@ describe("groupApi", () => {
       );
 
       expect(http.delete).toHaveBeenCalledWith(
-        "/system/group/grp_001/members/user_001"
+        "/events/groups/grp_001/members/user_001"
       );
       expect(result).toEqual({ success: true });
     });
@@ -214,7 +214,7 @@ describe("groupApi", () => {
       await groupApi.addMembersToGroup("grp_001", ["user_001", "user_002"]);
 
       expect(http.post).toHaveBeenCalledWith(
-        "/system/group/grp_001/members/batch",
+        "/events/groups/grp_001/members/batch",
         {
           userIds: ["user_001", "user_002"],
         }
@@ -234,7 +234,7 @@ describe("groupApi", () => {
       ]);
 
       expect(http.delete).toHaveBeenCalledWith(
-        "/system/group/grp_001/members/batch",
+        "/events/groups/grp_001/members/batch",
         {
           data: ["user_001", "user_002"],
         }

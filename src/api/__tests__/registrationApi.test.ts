@@ -45,7 +45,7 @@ describe("registrationApi registerOrganizer", () => {
 
     const result = await registerOrganizer(input);
 
-    expect(httpPost).toHaveBeenCalledWith("/system/reg/organizer", {
+    expect(httpPost).toHaveBeenCalledWith("/users/reg/organizer", {
       name: "Org Name",
       username: "organizer",
       userPassword: "password123",
@@ -71,7 +71,7 @@ describe("registrationApi registerMember", () => {
 
     const result = await registerMember(input);
 
-    expect(httpPost).toHaveBeenCalledWith("/system/reg/member", {
+    expect(httpPost).toHaveBeenCalledWith("/users/reg/member", {
       userId: "u-1",
       username: "member1",
       password: "password123",
@@ -97,7 +97,7 @@ describe("registrationApi getTenantMemberInfo", () => {
 
     const result = await getTenantMemberInfo(input);
 
-    expect(httpPost).toHaveBeenCalledWith("/system/reg/search", {
+    expect(httpPost).toHaveBeenCalledWith("/users/reg/search", {
       organizationId: "org-1",
       userId: "user-2",
     });

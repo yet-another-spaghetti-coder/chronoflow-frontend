@@ -1,8 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type {
-  CreateGroupConfig,
-  GroupConfig,
-} from "@/lib/validation/schema";
+import type { CreateGroupConfig, GroupConfig } from "@/lib/validation/schema";
 
 const httpMock = vi.hoisted(() => ({
   get: vi.fn(),
@@ -53,7 +50,9 @@ describe("groupApi getGroupsByEvent", () => {
 
     const result = await getGroupsByEvent("event-55");
 
-    expect(httpGet).toHaveBeenCalledWith("/system/group/list?eventId=event-55");
+    expect(httpGet).toHaveBeenCalledWith(
+      "/events/groups/list?eventId=event-55"
+    );
     expect(result).toEqual(groups);
   });
 });
@@ -72,7 +71,7 @@ describe("groupApi createGroup", () => {
 
     const result = await createGroup(input);
 
-    expect(httpPost).toHaveBeenCalledWith("/system/group/create", {
+    expect(httpPost).toHaveBeenCalledWith("/events/groups/create", {
       name: "Ops",
       eventId: "event-1",
       leadUserId: null,
@@ -97,7 +96,7 @@ describe("groupApi updateGroup", () => {
 
     const result = await updateGroup("group-1", input);
 
-    expect(httpPut).toHaveBeenCalledWith("/system/group/update", {
+    expect(httpPut).toHaveBeenCalledWith("/events/groups/update", {
       id: "group-1",
       name: "New Name",
       leadUserId: null,
@@ -115,7 +114,7 @@ describe("groupApi deleteGroup", () => {
 
     const result = await deleteGroup("group-9");
 
-    expect(httpDelete).toHaveBeenCalledWith("/system/group/delete/group-9");
+    expect(httpDelete).toHaveBeenCalledWith("/events/groups/delete/group-9");
     expect(result).toBe(true);
   });
 });
@@ -127,7 +126,7 @@ describe("groupApi member operations", () => {
 
     const result = await getGroupMembers("group-10");
 
-    expect(httpGet).toHaveBeenCalledWith("/system/group/group-10/members");
+    expect(httpGet).toHaveBeenCalledWith("/events/groups/group-10/members");
     expect(result).toEqual(members);
   });
 
@@ -137,7 +136,7 @@ describe("groupApi member operations", () => {
     const result = await addMemberToGroup("group-10", "user-20");
 
     expect(httpPost).toHaveBeenCalledWith(
-      "/system/group/group-10/members/user-20"
+      "/events/groups/group-10/members/user-20"
     );
     expect(result).toEqual({ ok: true });
   });
@@ -148,7 +147,7 @@ describe("groupApi member operations", () => {
     const result = await removeMemberFromGroup("group-10", "user-20");
 
     expect(httpDelete).toHaveBeenCalledWith(
-      "/system/group/group-10/members/user-20"
+      "/events/groups/group-10/members/user-20"
     );
     expect(result).toEqual({ ok: true });
   });
@@ -159,7 +158,7 @@ describe("groupApi member operations", () => {
     const result = await addMembersToGroup("group-10", ["user-1", "user-2"]);
 
     expect(httpPost).toHaveBeenCalledWith(
-      "/system/group/group-10/members/batch",
+      "/events/groups/group-10/members/batch",
       { userIds: ["user-1", "user-2"] }
     );
     expect(result).toEqual({ added: 2 });
@@ -174,7 +173,7 @@ describe("groupApi member operations", () => {
     ]);
 
     expect(httpDelete).toHaveBeenCalledWith(
-      "/system/group/group-10/members/batch",
+      "/events/groups/group-10/members/batch",
       { data: ["user-1", "user-2"] }
     );
     expect(result).toEqual({ removed: 2 });

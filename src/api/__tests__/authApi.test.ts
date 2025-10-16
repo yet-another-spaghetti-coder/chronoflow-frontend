@@ -49,10 +49,7 @@ describe("authApi login", () => {
 
     const result = await login(credentials);
 
-    expect(httpPost).toHaveBeenCalledWith(
-      "/system/auth/login",
-      credentials
-    );
+    expect(httpPost).toHaveBeenCalledWith("/users/auth/login", credentials);
     expect(result).toEqual({ user });
     expect(useAuthStore.getState().user).toEqual(user);
   });
@@ -76,7 +73,7 @@ describe("authApi logout", () => {
 
     await logout();
 
-    expect(httpPost).toHaveBeenCalledWith("/system/auth/logout", {});
+    expect(httpPost).toHaveBeenCalledWith("/users/auth/logout", {});
     expect(clearSpy).toHaveBeenCalled();
     expect(useAuthStore.getState().user).toBeNull();
   });
@@ -123,7 +120,7 @@ describe("authApi refresh", () => {
     const result = await refresh();
 
     expect(result).toBe(true);
-    expect(httpPost).toHaveBeenCalledWith("/system/auth/refresh", {});
+    expect(httpPost).toHaveBeenCalledWith("/users/auth/refresh", {});
     expect(useAuthStore.getState().user).toEqual(user);
   });
 
@@ -162,9 +159,9 @@ describe("authApi refresh", () => {
       resolveRefresh = resolve;
     });
 
-    httpPost.mockReturnValueOnce(refreshPromise).mockResolvedValueOnce(
-      makeRefreshResponse(user)
-    );
+    httpPost
+      .mockReturnValueOnce(refreshPromise)
+      .mockResolvedValueOnce(makeRefreshResponse(user));
 
     const firstCall = refresh();
     const secondCall = refresh();

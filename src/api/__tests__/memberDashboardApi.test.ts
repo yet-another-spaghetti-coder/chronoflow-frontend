@@ -44,14 +44,14 @@ describe("memberDashBoardApi getMemberDashboard", () => {
             id: "e-1",
             name: "Event One",
             description: null,
-          organizerId: null,
-          location: "HQ",
-          status: 0,
-          startTime: "2024-03-01T10:00:00Z",
-          endTime: "2024-03-01T12:00:00Z",
-          remark: null,
-          joiningParticipants: 5,
-          groups: [],
+            organizerId: null,
+            location: "HQ",
+            status: 0,
+            startTime: "2024-03-01T10:00:00Z",
+            endTime: "2024-03-01T12:00:00Z",
+            remark: null,
+            joiningParticipants: 5,
+            groups: [],
             taskStatus: { total: 5, remaining: 2, completed: 3 },
           },
         },
@@ -92,7 +92,7 @@ describe("memberDashBoardApi getMemberDashboard", () => {
 
     const result = await getMemberDashboard();
 
-    expect(httpGet).toHaveBeenCalledWith("/system/task/dashboard");
+    expect(httpGet).toHaveBeenCalledWith("/tasks/dashboard");
     expect(result.member.id).toBe("m-1");
     expect(result.groups).toHaveLength(1);
     expect(result.tasks[0].createTime).toBeInstanceOf(Date);

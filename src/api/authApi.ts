@@ -15,7 +15,7 @@ function setAuthFromServer(payload: AuthCredentials) {
 }
 
 export async function login(credentials: LoginUser): Promise<AuthCredentials> {
-  const res = await http.post("/system/auth/login", credentials);
+  const res = await http.post("/users/auth/login", credentials);
   const data = unwrap<AuthCredentials>(res.data);
   if (data.user) {
     setAuthFromServer({ user: data.user });
@@ -25,7 +25,7 @@ export async function login(credentials: LoginUser): Promise<AuthCredentials> {
 
 export async function logout() {
   try {
-    await http.post("/system/auth/logout", {});
+    await http.post("/users/auth/logout", {});
   } catch {
     // ignore network errors
   } finally {
@@ -38,7 +38,7 @@ export function refresh(): Promise<boolean> {
 
   refreshing = (async () => {
     try {
-      const r = await http.post("/system/auth/refresh", {});
+      const r = await http.post("/users/auth/refresh", {});
       const { user } = r.data?.data ?? {};
       if (user) setAuthFromServer({ user });
       return true;

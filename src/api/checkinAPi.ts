@@ -21,11 +21,11 @@ export type CheckInResult = {
 };
 
 export async function getAttendeeInfo(token: string): Promise<AttendeeInfo> {
-  const res = await http.get(`/system/attendee/scan?token=${token}`);
+  const res = await http.get(`/attendees/scan?token=${token}`);
   return unwrap<AttendeeInfo>(res.data);
 }
 
 export async function staffCheckIn(token: string): Promise<CheckInResult> {
-  const res = await http.post("/system/attendee/staff-scan", { token });
+  const res = await http.post("/attendees/staff-scan", { token });
   return unwrap<CheckInResult>(res.data);
 }

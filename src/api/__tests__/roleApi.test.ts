@@ -54,7 +54,7 @@ describe("roleApi getSystemRoles", () => {
 
     const result = await getSystemRoles();
 
-    expect(httpGet).toHaveBeenCalledWith("/system/roles");
+    expect(httpGet).toHaveBeenCalledWith("/users/roles");
     expect(result[0].name).toBe("Admin");
   });
 });
@@ -71,7 +71,7 @@ describe("roleApi createRole", () => {
 
     const result = await createRole(config);
 
-    expect(httpPost).toHaveBeenCalledWith("/system/roles", config);
+    expect(httpPost).toHaveBeenCalledWith("/users/roles", config);
     expect(result).toEqual({ id: "role-1" });
   });
 });
@@ -88,7 +88,7 @@ describe("roleApi updateRole", () => {
 
     const result = await updateRole("role-2", config);
 
-    expect(httpPatch).toHaveBeenCalledWith("/system/roles/role-2", config);
+    expect(httpPatch).toHaveBeenCalledWith("/users/roles/role-2", config);
     expect(result).toEqual({ updated: true });
   });
 });
@@ -99,7 +99,7 @@ describe("roleApi deleteRole", () => {
 
     const result = await deleteRole("role-10");
 
-    expect(httpDelete).toHaveBeenCalledWith("/system/roles/role-10");
+    expect(httpDelete).toHaveBeenCalledWith("/users/roles/role-10");
     expect(result).toBe(true);
   });
 });
@@ -115,7 +115,7 @@ describe("roleApi assignRole", () => {
 
     const result = await assignRole(payload);
 
-    expect(httpPost).toHaveBeenCalledWith("/system/roles/assign", payload);
+    expect(httpPost).toHaveBeenCalledWith("/users/roles/assign", payload);
     expect(result).toEqual({ assigned: true });
   });
 });
