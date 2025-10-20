@@ -54,6 +54,7 @@
     "date-fns": "^4.1.0",
     "exceljs": "^4.4.0",
     "file-saver": "^2.0.5",
+    "firebase": "^12.4.0",
     "framer-motion": "^12.23.12",
     "html5-qrcode": "^2.3.8",
     "json-bigint": "^1.0.0",
