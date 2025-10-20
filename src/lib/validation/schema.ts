@@ -393,7 +393,7 @@ export const eventTaskSchema = z.object({
         })
       )
       .nullable(),
-  }),
+  }).nullable(),
 });
 
 export const eventTaskListSchema = z.array(eventTaskSchema);
@@ -583,3 +583,102 @@ export const AttendeeConfigSchema = z.object({
 });
 
 export type AttendeeConfig = z.infer<typeof AttendeeConfigSchema>;
+
+//Push Notification Device Registration
+export const PushPlatformEnum = z.enum(["WEB", "ANDROID", "IOS"]);
+export const PushNotificationDeviceRegistrationSchema = z.object({
+  userId: z.string().min(1, "User ID is required"),
+  token: z.string().min(1, "Token is required"),
+  platform: PushPlatformEnum.optional(),
+});
+export type PushNotificationDeviceRegistration = z.infer<
+  typeof PushNotificationDeviceRegistrationSchema
+>;
+
+export const RevokeDeviceByTokenSchema = z.object({
+  token: z.string().min(1, "Token is required"),
+});
+export type RevokeDeviceByToken = z.infer<typeof RevokeDeviceByTokenSchema>;
+
+export const RevokeAllDevicesForUserSchema = z.object({
+  userId: z.string().min(1, "User ID is required"),
+});
+export type RevokeAllDevicesForUser = z.infer<
+  typeof RevokeAllDevicesForUserSchema
+>;
+
+export const NotificationDeviceSchema = z.object({
+  id: z.string().or(z.number()),
+  userId: z.string(),
+  token: z.string(),
+  platform: z.string(),
+  status: z.string(),
+  createTime: z.string().optional(),
+  updateTime: z.string().optional(),
+});
+
+export type NotificationDevice = z.infer<typeof NotificationDeviceSchema>;
+
+export const ActiveDevicesQuerySchema = z.object({
+  userId: z.string().min(1, "User ID is required"),
+});
+export type ActiveDevicesQuery = z.infer<typeof ActiveDevicesQuerySchema>;
+
+//Web socket Notification Feed
+const coerceToISO = (v: string | number | Date): string => {
+  const d =
+    v instanceof Date
+      ? v
+      : typeof v === "string"
+      ? new Date(v)
+      : // number: treat < 1e12 as seconds, otherwise ms
+        new Date(v < 1_000_000_000_000 ? v * 1000 : v);
+
+  if (Number.isNaN(d.getTime())) {
+    throw new Error("Invalid date");
+  }
+  return d.toISOString();
+};
+
+const zIsoString = z
+  .union([z.string(), z.number(), z.date()])
+  .transform((v) => coerceToISO(v));
+
+const zIsoStringNullable = z
+  .union([zIsoString, z.null(), z.undefined()])
+  .transform((v) => (v == null ? null : (v as string)));
+
+export const NotificationFeedSchema = z.object({
+  id: z.string(),
+  userId: z.string(),
+  eventId: z.string(),
+  type: z.string(),
+  title: z.string().optional().nullable(),
+  body: z.string().optional().nullable(),
+  // allow arbitrary payload
+  data: z.record(z.string(), z.unknown()).optional(),
+
+  // dates: coerce to ISO strings (accept string | number | Date)
+  createdAt: zIsoString,
+  deliveredAt: zIsoStringNullable.optional(),
+  seenAt: zIsoStringNullable.optional(),
+  openedAt: zIsoStringNullable.optional(),
+  updatedAt: zIsoStringNullable.optional(),
+});
+
+export const NotificationFeedListSchema = z.array(NotificationFeedSchema);
+
+export const UnreadCountResponseSchema = z.object({
+  unread: z.number().nonnegative(),
+});
+
+export const MarkOpenedRequestSchema = z.object({
+  userId: z.string().min(1),
+  notificationIds: z.array(z.string().min(1)),
+});
+
+export const MarkOpenedResponseSchema = z.object({
+  updated: z.number().nonnegative(),
+});
+
+export type NotificationFeed = z.infer<typeof NotificationFeedSchema>;
