@@ -43,7 +43,6 @@ export function Navbar({ brand }: NavbarProps) {
   ) : (
     brand ?? (
       <Link to="/" className="text-lg font-semibold tracking-tight">
-        MyApp
       </Link>
     )
   );
