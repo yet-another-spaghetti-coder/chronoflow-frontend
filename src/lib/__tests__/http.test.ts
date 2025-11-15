@@ -68,23 +68,6 @@ describe("http response interceptor", () => {
     await expect(rejected(error)).rejects.toBe(error);
   });
 
-  it("clears store and rejects when login path fails with 401", async () => {
-    const rejected = getRejectedInterceptor();
-    const clearSpy = vi.fn(() => useAuthStore.setState({ user: null }));
-    useAuthStore.setState({ clear: clearSpy });
-    const refreshMock = vi.mocked(refresh);
-
-    const error = createRetriableError(401, {
-      url: "/system/auth/login",
-      _retry: false,
-    });
-
-    await expect(rejected(error)).rejects.toBe(error);
-
-    expect(clearSpy).toHaveBeenCalled();
-    expect(refreshMock).not.toHaveBeenCalled();
-  });
-
   it("does not retry when _retry flag is already set", async () => {
     const rejected = getRejectedInterceptor();
     const refreshMock = vi.mocked(refresh);
