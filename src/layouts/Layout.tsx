@@ -3,12 +3,14 @@ import { cn } from "@/lib/utils";
 import { useSidebarToggle } from "@/hooks/system/useSideBarToggle";
 import { Sidebar } from "@/components/side-bar/side-bar";
 import { Navbar } from "@/components/nav-bar/bar";
+import { NotificationInitializer } from "@/components/notification/notification-push-initializer";
 
 export default function AppLayout() {
   const { isOpen, setIsOpen } = useSidebarToggle();
 
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-900">
+      <NotificationInitializer />
       <div className="flex min-h-screen">
         {/* Sidebar */}
         <aside

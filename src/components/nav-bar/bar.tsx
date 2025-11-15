@@ -4,6 +4,7 @@ import { UserNav } from "./user-nav";
 import BackButton from "../navigation/back-button";
 import type { OrgEvent } from "@/lib/validation/schema";
 import { getEventById } from "@/api/eventApi";
+import { NotificationMenu } from "../notification/notification-menu";
 
 type NavbarProps = {
   brand?: React.ReactNode;
@@ -89,6 +90,8 @@ export function Navbar({ brand }: NavbarProps) {
 
         {/* Center: Event info when on event page */}
         {centerNode}
+
+        <NotificationMenu/>
 
         {/* Right: User */}
         <div className="flex items-center gap-2">
