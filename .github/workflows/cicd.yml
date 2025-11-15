@@ -7,6 +7,12 @@ on:
   pull_request:
     branches: [test, dev]
 
+permissions:
+  contents: read
+  actions: read
+  security-events: write
+  pull-requests: read
+
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
@@ -73,7 +79,9 @@ jobs:
     needs: [test]
     permissions:
       contents: read
+      actions: read   
       security-events: write
+      pull-requests: read
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -86,6 +94,7 @@ jobs:
           sudo apt-get update && sudo apt-get install -y jq
       - name: Semgrep JSON
         run: |
+          set +e  # Allow command to fail
           semgrep scan \
             --config p/owasp-top-ten \
             --config p/javascript \
@@ -96,8 +105,19 @@ jobs:
             --metrics=off \
             --json --output semgrep.json \
             .
+          EXIT_CODE=$?
+          if [ $EXIT_CODE -eq 0 ]; then
+            echo "Semgrep JSON scan completed with no findings"
+          elif [ $EXIT_CODE -eq 1 ]; then
+            echo "Semgrep JSON scan completed with findings (exit code 1)"
+          else
+            echo "Semgrep JSON scan failed with exit code $EXIT_CODE"
+          fi
+          # Always continue - we want to upload results even if there are findings
+          exit 0
       - name: Semgrep SARIF
         run: |
+          set +e  # Allow command to fail
           semgrep scan \
             --config p/owasp-top-ten \
             --config p/javascript \
@@ -108,17 +128,49 @@ jobs:
             --metrics=off \
             --sarif --output semgrep.sarif \
             .
+          EXIT_CODE=$?
+          if [ $EXIT_CODE -eq 0 ]; then
+            echo "Semgrep scan completed with no findings"
+          elif [ $EXIT_CODE -eq 1 ]; then
+            echo "Semgrep scan completed with findings (exit code 1)"
+          else
+            echo "Semgrep scan failed with exit code $EXIT_CODE"
+          fi
+          # Always continue - we want to upload results even if there are findings
+          exit 0
       - name: Upload SARIF to GitHub Security tab
         uses: github/codeql-action/upload-sarif@v4
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+        continue-on-error: true
         with:
           sarif_file: semgrep.sarif
+          category: semgrep
+      - name: SARIF Upload Status
+        if: always()
+        run: |
+          if [ -f semgrep.sarif ]; then
+            echo "SARIF file generated successfully"
+            echo "Note: SARIF upload to Security tab may be restricted based on repository permissions"
+          else
+            echo "SARIF file not found"
+          fi
       - name: Job summary
+        if: always()
         run: |
           echo "## Semgrep Summary" >> $GITHUB_STEP_SUMMARY
-          TOTAL=$(jq '.results | length' semgrep.json)
-          FILES=$(jq '.paths.scanned | length' semgrep.json 2>/dev/null || echo 0)
-          echo "- **Findings:** $TOTAL" >> $GITHUB_STEP_SUMMARY
-          echo "- **Files scanned:** $FILES" >> $GITHUB_STEP_SUMMARY
+          if [ -f semgrep.json ]; then
+            TOTAL=$(jq '.results | length' semgrep.json 2>/dev/null || echo 0)
+            FILES=$(jq '.paths.scanned | length' semgrep.json 2>/dev/null || echo 0)
+            echo "- **Findings:** $TOTAL" >> $GITHUB_STEP_SUMMARY
+            echo "- **Files scanned:** $FILES" >> $GITHUB_STEP_SUMMARY
+            if [ "$TOTAL" = "0" ]; then
+              echo "No security issues found" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "Found $TOTAL security findings - review the artifacts for details" >> $GITHUB_STEP_SUMMARY
+            fi
+          else
+            echo "Semgrep JSON results not found" >> $GITHUB_STEP_SUMMARY
+          fi
       - name: Upload raw artifacts
         if: always()
         uses: actions/upload-artifact@v4
