@@ -30,6 +30,9 @@ vi.mock('firebase/messaging', () => ({
   deleteToken: mockDeleteToken,
 }));
 
+// Import types from Firebase for type checking
+import type { MessagePayload } from 'firebase/messaging';
+
 // Import the functions to test after mocking
 import {
   initFirebase,
@@ -273,7 +276,10 @@ describe('firebaseUtils', () => {
 
     it('should call the callback when message is received', async () => {
       const callback = vi.fn();
-      const mockPayload = {
+      const mockPayload: MessagePayload = {
+        from: 'test-sender',
+        collapseKey: 'test-collapse-key',
+        messageId: 'test-message-id',
         notification: {
           title: 'Test Notification',
           body: 'Test message body',
@@ -281,16 +287,16 @@ describe('firebaseUtils', () => {
       };
 
       // Capture the onMessage callback
-      let messageHandler: ((payload: any) => void) | null = null;
+      let messageHandler: ((payload: MessagePayload) => void) | undefined;
       mockOnMessage.mockImplementation((_messaging, handler) => {
-        messageHandler = handler;
+        messageHandler = handler as (payload: MessagePayload) => void;
       });
 
       await listenForMessages(callback);
 
       // Simulate receiving a message
       if (messageHandler) {
-        (messageHandler as any)(mockPayload);
+        messageHandler(mockPayload);
       }
 
       expect(callback).toHaveBeenCalledWith(mockPayload);
@@ -472,7 +478,7 @@ describe('firebaseUtils', () => {
         configurable: true,
       });
 
-      const token = await getFcmToken(null as any);
+      const token = await getFcmToken(null as unknown as string);
 
       expect(token).toBeNull();
     });
@@ -484,7 +490,7 @@ describe('firebaseUtils', () => {
         configurable: true,
       });
 
-      const token = await getFcmToken(undefined as any);
+      const token = await getFcmToken(undefined as unknown as string);
 
       expect(token).toBeNull();
     });
