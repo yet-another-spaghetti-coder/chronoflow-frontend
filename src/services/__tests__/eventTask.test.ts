@@ -20,6 +20,7 @@ import {
   type TaskStatusCode,
   type TaskStatusEnumType,
 } from "../eventTask";
+import type { EventGroupWithAssignableMembers, EventTaskCreateConfig, EventTaskConfig } from "@/lib/validation/schema";
 
 type TestGroup = { id?: string; name: string };
 type TestUser = {
@@ -352,7 +353,7 @@ describe("services/eventTask getAssignableMembersOptions", () => {
   ];
 
   it("returns unique assignee options with group labels", () => {
-    const options = getAssignableMembersOptions(mockGroups as any);
+    const options = getAssignableMembersOptions(mockGroups as EventGroupWithAssignableMembers[]);
     
     expect(options).toHaveLength(3); // Should deduplicate user-2
     expect(options).toContainEqual({
@@ -375,7 +376,7 @@ describe("services/eventTask getAssignableMembersOptions", () => {
 
   it("handles groups with no members", () => {
     const emptyGroups = [{ id: "group-1", name: "Empty", members: [] }];
-    expect(getAssignableMembersOptions(emptyGroups as any)).toEqual([]);
+    expect(getAssignableMembersOptions(emptyGroups as EventGroupWithAssignableMembers[])).toEqual([]);
   });
 });
 
@@ -393,7 +394,7 @@ describe("services/eventTask buildTaskCreateFormData", () => {
       files: [mockFile]
     };
 
-    const formData = buildTaskCreateFormData(input as any);
+    const formData = buildTaskCreateFormData(input as EventTaskCreateConfig);
     
     expect(formData.get("name")).toBe("Test Task");
     expect(formData.get("targetUserId")).toBe("user-123");
@@ -410,7 +411,7 @@ describe("services/eventTask buildTaskCreateFormData", () => {
       targetUserId: "user-456"
     };
 
-    const formData = buildTaskCreateFormData(input as any);
+    const formData = buildTaskCreateFormData(input as EventTaskCreateConfig);
     
     expect(formData.get("name")).toBe("Minimal Task");
     expect(formData.get("targetUserId")).toBe("user-456");
@@ -422,17 +423,17 @@ describe("services/eventTask buildTaskCreateFormData", () => {
   });
 
   it("handles null/undefined optional fields", () => {
-    const input = {
+    const input: EventTaskCreateConfig = {
       name: "Task with nulls",
       targetUserId: "user-789",
       description: null,
       remark: null,
       startTime: undefined,
       endTime: undefined,
-      files: null
+      files: undefined
     };
 
-    const formData = buildTaskCreateFormData(input as any);
+    const formData = buildTaskCreateFormData(input);
     
     expect(formData.get("name")).toBe("Task with nulls");
     expect(formData.get("targetUserId")).toBe("user-789");
@@ -456,7 +457,7 @@ describe("services/eventTask buildTaskConfigFormData", () => {
       files: [mockFile]
     };
 
-    const formData = buildTaskConfigFormData(input as any);
+    const formData = buildTaskConfigFormData(input as EventTaskConfig);
     
     expect(formData.get("name")).toBe("Updated Task");
     expect(formData.get("description")).toBe("Updated description");
@@ -473,7 +474,7 @@ describe("services/eventTask buildTaskConfigFormData", () => {
       name: "Partial Update"
     };
 
-    const formData = buildTaskConfigFormData(input as any);
+    const formData = buildTaskConfigFormData(input as EventTaskConfig);
     
     expect(formData.get("name")).toBe("Partial Update");
     expect(formData.get("description")).toBeNull();
@@ -486,7 +487,7 @@ describe("services/eventTask buildTaskConfigFormData", () => {
       type: TaskActionEnum.SUBMIT
     };
 
-    const formData = buildTaskConfigFormData(input as any);
+    const formData = buildTaskConfigFormData(input as EventTaskConfig);
     expect(formData.get("type")).toBe(String(TaskActionEnum.SUBMIT));
   });
 });

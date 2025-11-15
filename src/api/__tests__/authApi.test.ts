@@ -35,7 +35,9 @@ vi.mock("../pushNotiApi", () => ({
 
 const mockHttpPost = http.post as MockedFunction<typeof http.post>;
 const mockUnwrap = unwrap as MockedFunction<typeof unwrap>;
-const mockUseAuthStore = useAuthStore as any;
+const mockUseAuthStore = useAuthStore as unknown as {
+  getState: MockedFunction<() => ReturnType<typeof useAuthStore.getState>>;
+};
 const mockDeleteFcmToken = deleteFcmToken as MockedFunction<typeof deleteFcmToken>;
 const mockRevokeDeviceByToken = revokeDeviceByToken as MockedFunction<typeof revokeDeviceByToken>;
 
