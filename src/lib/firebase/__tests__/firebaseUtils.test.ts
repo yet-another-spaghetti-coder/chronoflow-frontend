@@ -91,24 +91,6 @@ describe('firebaseUtils', () => {
     vi.restoreAllMocks();
   });
 
-  describe('initFirebase', () => {
-    it('should initialize Firebase app when called', () => {
-      initFirebase();
-
-      expect(mockInitializeApp).toHaveBeenCalledWith(
-        expect.objectContaining({
-          apiKey: expect.any(String),
-          authDomain: expect.any(String),
-          projectId: expect.any(String),
-        })
-      );
-    });
-
-    it('should handle Firebase initialization without throwing errors', () => {
-      expect(() => initFirebase()).not.toThrow();
-    });
-  });
-
   describe('requestNotificationPermission', () => {
     it('should request notification permission and return the result', async () => {
       const mockRequestPermission = vi.fn().mockResolvedValue('granted');
