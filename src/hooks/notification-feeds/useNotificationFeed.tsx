@@ -23,7 +23,6 @@ export function useNotificationFeed(userIdProp?: string, limit = 20): UseNotific
 
   // FEED
   const feedQuery = useQuery<NotificationFeed[], Error>({
-    // <- note first two positions are stable so predicate above catches all
     queryKey: ["feed", userId, { limit }],
     queryFn: () => getNotificationFeed(userId, limit),
     enabled,
