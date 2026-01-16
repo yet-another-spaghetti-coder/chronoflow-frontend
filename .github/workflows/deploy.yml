@@ -1,0 +1,566 @@
+name: ChronoFlow CI/CD Pipeline
+run-name: Deploy to ${{ inputs.environment || 'dev' }} by @${{ github.actor }}
+
+on:
+  push:
+    branches: ["main", "dev"]
+  pull_request:
+    branches: ["main", "dev"]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Target Environment"
+        required: true
+        default: "dev"
+        type: choice
+        options:
+          - dev
+          - staging
+          - prod
+
+permissions:
+  contents: read
+  actions: read
+  pull-requests: write
+  checks: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: "25"
+  PROJECT_NAME: "chronoflow"
+  COST_CENTER: "cf-01"
+  CI: true
+
+jobs:
+  # ====================================================
+  # PHASE 1: Type Check (Fast Fail)
+  # ====================================================
+  typecheck:
+    name: "Type Check"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+
+      - run: npm ci
+      - run: npm run typecheck
+
+  # ====================================================
+  # PHASE 2: Tests
+  # ====================================================
+  test:
+    name: "Unit & Integration Tests"
+    runs-on: ubuntu-latest
+    needs: typecheck
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+
+      - run: npm ci
+
+      - name: Run Vitest
+        run: npm run test:ci:unit
+
+      - name: Upload coverage
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: coverage
+          path: coverage/
+          retention-days: 7
+
+  # ====================================================
+  # PHASE 3: Code Quality (Parallel)
+  # ====================================================
+  lint:
+    name: "ESLint Check"
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+
+      - run: npm ci
+
+      - name: Run ESLint
+        run: npm run lint
+
+      - name: Upload ESLint report
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: eslint-report
+          path: eslint-report.json
+          if-no-files-found: ignore
+
+  semgrep:
+    name: "SAST (Semgrep)"
+    runs-on: ubuntu-latest
+    needs: test
+    permissions:
+      contents: read
+      pull-requests: write
+      checks: write
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: reviewdog/action-setup@v1
+        with:
+          reviewdog_version: latest
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.14"
+
+      - name: Install Semgrep
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install semgrep
+
+      - name: Semgrep Scan with Reviewdog
+        env:
+          REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          semgrep scan \
+            --config p/owasp-top-ten \
+            --config p/javascript \
+            --config p/typescript \
+            --config p/react \
+            --config p/secrets \
+            --include 'src/**/*.ts' --include 'src/**/*.tsx' \
+            --metrics=off \
+            --sarif \
+            | reviewdog -f=sarif -name="Semgrep" -reporter=github-pr-review -filter-mode=nofilter -fail-on-error=false -level=warning
+
+      - name: Semgrep Scan (Artifacts)
+        if: always()
+        run: |
+          semgrep scan \
+            --config p/owasp-top-ten \
+            --config p/javascript \
+            --config p/typescript \
+            --config p/react \
+            --config p/secrets \
+            --include 'src/**/*.ts' --include 'src/**/*.tsx' \
+            --metrics=off \
+            --sarif --output semgrep.sarif \
+            || true
+
+      - name: Job Summary
+        if: always()
+        run: |
+          echo "## Semgrep Summary" >> $GITHUB_STEP_SUMMARY
+
+          if [ -f semgrep.sarif ] && command -v jq &> /dev/null; then
+            TOTAL=$(jq '.runs[0].results | length' semgrep.sarif 2>/dev/null || echo 0)
+            echo "- **Findings:** $TOTAL" >> $GITHUB_STEP_SUMMARY
+            
+            if [ "$TOTAL" = "0" ]; then
+              echo "No security issues found." >> $GITHUB_STEP_SUMMARY
+            else
+              echo "Warning: Found $TOTAL security findings." >> $GITHUB_STEP_SUMMARY
+              if [ "${{ github.event_name }}" == "pull_request" ]; then
+                echo "Review comments posted on PR files via Reviewdog." >> $GITHUB_STEP_SUMMARY
+              fi
+            fi
+          else
+            echo "Semgrep scan completed." >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Upload Semgrep artifacts
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: semgrep-results-${{ github.run_id }}
+          path: semgrep.sarif
+          if-no-files-found: ignore
+
+  sca:
+    name: "SCA (npm audit)"
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+
+      - run: npm ci
+
+      - name: Run npm audit (production only)
+        run: |
+          set -o pipefail
+          npm audit --omit=dev --json > audit.json || true
+
+      - name: Audit Summary
+        run: |
+          node <<'NODE'
+          const fs = require('fs');
+          const SUMMARY = process.env.GITHUB_STEP_SUMMARY;
+          const path = 'audit.json';
+          const data = fs.existsSync(path) ? JSON.parse(fs.readFileSync(path, 'utf8')) : {};
+          const counts = (data.metadata && data.metadata.vulnerabilities) || data.vulnerabilities || {};
+          const crit = counts.critical || 0;
+          const high = counts.high || 0;
+          const med  = counts.moderate ?? counts.medium ?? 0;
+          const low  = counts.low || 0;
+          const rows = [];
+          if (data.vulnerabilities && typeof data.vulnerabilities === 'object') {
+            for (const [name, v] of Object.entries(data.vulnerabilities)) {
+              const sev = (v.severity || 'info').toLowerCase();
+              const via = (v.via || [])
+                .map(x => typeof x === 'string' ? x : x.title || x.name || '')
+                .filter(Boolean)
+                .slice(0, 3)
+                .join('; ');
+              const fix = v.fixAvailable
+                ? (typeof v.fixAvailable === 'object'
+                    ? `${v.fixAvailable.name || name}@${v.fixAvailable.version || ''}`.replace(/@$/, '')
+                    : 'yes')
+                : 'no';
+              rows.push({
+                name: '`' + name + '`',
+                severity: sev,
+                range: '`' + (v.range || v.version || '') + '`',
+                via: via || '—',
+                fix
+              });
+            }
+          }
+          const sevRank = s => ({critical:4, high:3, moderate:2, medium:2, low:1, info:0}[s]||0);
+          rows.sort((a,b) => sevRank(b.severity) - sevRank(a.severity));
+          let md = '';
+          md += `## npm audit – Summary (Production Dependencies Only)\n\n`;
+          md += `- **Critical:** ${crit} · **High:** ${high} · **Moderate:** ${med} · **Low:** ${low}\n\n`;
+          if (rows.length) {
+            md += `### Top findings\n`;
+            md += `| Package | Severity | Affected | Via (sample) | Fix available |\n`;
+            md += `|---|---|---|---|---|\n`;
+            for (const r of rows.slice(0, 20)) {
+              md += `| ${r.name} | ${r.severity} | ${r.range} | ${r.via} | ${r.fix} |\n`;
+            }
+            if (rows.length > 20) md += `\n_…and ${rows.length - 20} more._\n`;
+          } else {
+            md += `No vulnerabilities found in production dependencies.\n`;
+          }
+          fs.appendFileSync(SUMMARY, md);
+          NODE
+
+      - name: Fail on critical/high vulnerabilities (production only)
+        env:
+          ENFORCE: "true"
+        run: |
+          node -e "const r=require('./audit.json'); \
+            const c=(r.metadata&&r.metadata.vulnerabilities)||r.vulnerabilities||{}; \
+            const hi=(c.high||0), cr=(c.critical||0); \
+            console.log('Production dependencies - High:',hi,'Critical:',cr); \
+            if (process.env.ENFORCE==='true' && (hi+cr)>0) { \
+              console.error('Failure: Production dependencies have', hi+cr, 'high/critical vulnerabilities.'); \
+              console.error('These affect your deployed application and must be fixed.'); \
+              process.exit(1) \
+            } else { \
+              console.log('Security check passed: No critical/high vulnerabilities in production dependencies.'); \
+            }"
+
+      - name: Upload audit artifact
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: npm-audit-${{ github.run_id }}
+          path: audit.json
+
+  dependency-review:
+    name: "Dependency Review"
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Dependency Review
+        uses: actions/dependency-review-action@v4
+        with:
+          fail-on-severity: moderate
+          comment-summary-in-pr: always
+
+  secret-scan:
+    name: "Secret Scanning"
+    runs-on: ubuntu-latest
+    needs: test
+    permissions:
+      contents: read
+      pull-requests: write
+      checks: write
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0 # Full history for better detection
+
+      - name: Gitleaks Scan
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_ENABLE_SUMMARY: true
+
+      - name: Run Reviewdog for Gitleaks (PR Comments)
+        if: failure() && github.event_name == 'pull_request'
+        uses: reviewdog/action-gitleaks@v1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          reporter: github-pr-review
+          level: error
+          fail_on_error: true
+
+  # ====================================================
+  # PHASE 4: Build & Optimize
+  # ====================================================
+  build:
+    name: "Build & Optimize"
+    needs: [lint, semgrep, sca, secret-scan]
+    runs-on: ubuntu-latest
+    outputs:
+      build-hash: ${{ steps.hash.outputs.hash }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+
+      - run: npm ci
+
+      # Set build environment
+      - name: Set Build Environment
+        run: |
+          ENV="${{ inputs.environment || 'dev' }}"
+          echo "VITE_ENV=${ENV}" >> $GITHUB_ENV
+          echo "Building for environment: ${ENV}"
+
+      # Production build with source maps
+      - name: Build React App
+        run: npm run build
+        env:
+          NODE_ENV: production
+          GENERATE_SOURCEMAP: true
+
+      # Generate build hash for cache busting verification
+      - name: Generate Build Hash
+        id: hash
+        run: |
+          BUILD_HASH=$(find dist -type f -exec md5sum {} \; | sort | md5sum | cut -d' ' -f1)
+          echo "hash=${BUILD_HASH}" >> $GITHUB_OUTPUT
+          echo "Build Hash: ${BUILD_HASH}"
+
+      # Bundle analysis (warning only)
+      - name: Analyze Bundle Size
+        run: |
+          if command -v npx &> /dev/null && [ -f "package.json" ]; then
+            echo "Analyzing bundle size..."
+            npx vite-bundle-visualizer --template sunburst --filename stats.html || true
+          fi
+        continue-on-error: true
+
+      # Upload build artifact with compression
+      - name: Upload Build Artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: dist-${{ github.sha }}
+          path: dist/
+          retention-days: 7
+          compression-level: 9
+
+  # ====================================================
+  # PHASE 5: E2E & DAST (Parallel)
+  # ====================================================
+  e2e:
+    name: "Playwright E2E Tests"
+    needs: build
+    runs-on: ubuntu-latest
+    if: >
+      !github.event.pull_request.head.repo.fork && (
+        github.event_name == 'workflow_dispatch' ||
+        github.event_name == 'push'
+      )
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+
+      - run: npm ci
+
+      # Download build
+      - name: Download Build Artifact
+        uses: actions/download-artifact@v7
+        with:
+          name: dist-${{ github.sha }}
+          path: dist
+
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps
+
+      - name: Run Playwright Tests
+        run: npm run test:ci:e2e
+
+      - name: Upload Playwright Report
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 20
+
+  dast:
+    name: "DAST (OWASP ZAP)"
+    needs: build
+    runs-on: ubuntu-latest
+    if: >
+      !github.event.pull_request.head.repo.fork && (
+        github.event_name == 'workflow_dispatch' ||
+        github.event_name == 'push'
+      )
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+
+      - run: npm ci
+
+      # Download build
+      - name: Download Build Artifact
+        uses: actions/download-artifact@v7
+        with:
+          name: dist-${{ github.sha }}
+          path: dist
+
+      - name: Start preview server
+        run: |
+          npx vite preview --host 127.0.0.1 --port 5173 --strictPort &
+          echo $! > web_pid
+
+      - name: Wait for server
+        run: npx wait-on http-get://127.0.0.1:5173
+
+      - name: Relax workspace permissions for ZAP
+        run: chmod -R a+w .
+
+      - name: OWASP ZAP Baseline Scan
+        continue-on-error: true
+        env:
+          TARGET_URL: "http://127.0.0.1:5173"
+        run: |
+          set -euo pipefail
+          docker pull ghcr.io/zaproxy/zaproxy:stable -q
+          set +e
+          docker run --rm \
+            -v "$PWD":/zap/wrk/:rw \
+            -w /zap/wrk \
+            --network host \
+            ghcr.io/zaproxy/zaproxy:stable \
+            zap-baseline.py \
+              -t "$TARGET_URL" \
+              -J report_json.json \
+              -w report_md.md \
+              -r report_html.html \
+              -j \
+              -m 5 \
+              -c ".zap/rules.tsv"
+          EXIT_CODE=$?
+          set -e
+          echo "ZAP scan completed with exit code: $EXIT_CODE"
+
+      - name: Upload ZAP Report
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: zap-baseline-report-${{ github.run_id }}
+          path: |
+            report_html.html
+            report_md.md
+            report_json.json
+
+      - name: Stop preview server
+        if: always()
+        run: kill $(cat web_pid) || true
+
+  # ====================================================
+  # PHASE 6: Pre-Deployment Validation
+  # ====================================================
+  pre-deploy-validation:
+    name: "Pre-Deploy Validation"
+    needs: [e2e, dast]
+    runs-on: ubuntu-latest
+    if: always() && !cancelled()
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Download Build Artifact
+        uses: actions/download-artifact@v7
+        with:
+          name: dist-${{ github.sha }}
+          path: dist
+
+      # Verify critical files
+      - name: Verify Build Integrity
+        run: |
+          echo "Checking critical files..."
+          [ -f dist/index.html ] || { echo "ERROR: index.html missing"; exit 1; }
+          [ -d dist/assets ] || { echo "ERROR: assets directory missing"; exit 1; }
+          echo "Build integrity verified."
+
+      # Security scan for leaked secrets
+      - name: Scan for Secrets
+        run: |
+          echo "Scanning for sensitive data..."
+          if grep -rE "AWS_ACCESS_KEY|AWS_SECRET|PRIVATE_KEY|api_key|apiKey.*['\"]sk-|AIza[0-9A-Za-z-_]{35}" dist/ 2>/dev/null; then
+            echo "ERROR: Sensitive data detected in build!"
+            exit 1
+          fi
+          echo "No secrets detected."
+
+      # Check asset optimization
+      - name: Verify Asset Optimization
+        run: |
+          echo "Checking asset optimization..."
+
+          # Check if JS files are minified (no excessive whitespace)
+          for jsfile in $(find dist/assets -name "*.js" 2>/dev/null | head -5); do
+            if [ -f "$jsfile" ]; then
+              lines=$(wc -l < "$jsfile")
+              if [ "$lines" -gt 100 ]; then
+                echo "Warning: $jsfile may not be minified ($lines lines)"
+              fi
+            fi
+          done
+
+          # Check for source maps (should exist for production debugging)
+          if ! ls dist/assets/*.js.map &>/dev/null; then
+            echo "Warning: No source maps found (recommended for production debugging)"
+          fi
+
+          echo "Asset optimization check complete."
