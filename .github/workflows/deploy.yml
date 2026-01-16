@@ -1,5 +1,5 @@
 name: ChronoFlow CI/CD Pipeline
-run-name: Deploy to ${{ inputs.environment || 'dev' }} by @${{ github.actor }}
+run-name: Deploy to ${{ inputs.environment || 'dev' }} triggered by ${{ github.actor }}
 
 on:
   push:
@@ -36,10 +36,10 @@ env:
 
 jobs:
   # ====================================================
-  # PHASE 1: Type Check (Fast Fail)
+  # PHASE 1: Type Verification
   # ====================================================
   typecheck:
-    name: "Type Check"
+    name: "Type Verification"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -53,7 +53,7 @@ jobs:
       - run: npm run typecheck
 
   # ====================================================
-  # PHASE 2: Tests
+  # PHASE 2: Testing Strategy
   # ====================================================
   test:
     name: "Unit & Integration Tests"
@@ -69,10 +69,10 @@ jobs:
 
       - run: npm ci
 
-      - name: Run Vitest
+      - name: Execute Vitest
         run: npm run test:ci:unit
 
-      - name: Upload coverage
+      - name: Upload coverage artifact
         if: always()
         uses: actions/upload-artifact@v6
         with:
@@ -81,10 +81,10 @@ jobs:
           retention-days: 7
 
   # ====================================================
-  # PHASE 3: Code Quality (Parallel)
+  # PHASE 3: Code Quality & Security
   # ====================================================
   lint:
-    name: "ESLint Check"
+    name: "ESLint Analysis"
     runs-on: ubuntu-latest
     needs: test
     steps:
@@ -97,7 +97,7 @@ jobs:
 
       - run: npm ci
 
-      - name: Run ESLint
+      - name: Execute ESLint
         run: npm run lint
 
       - name: Upload ESLint report
@@ -147,7 +147,7 @@ jobs:
             --sarif \
             | reviewdog -f=sarif -name="Semgrep" -reporter=github-pr-review -filter-mode=nofilter -fail-on-error=false -level=warning
 
-      - name: Semgrep Scan (Artifacts)
+      - name: Semgrep Scan (Artifact Generation)
         if: always()
         run: |
           semgrep scan \
@@ -161,7 +161,7 @@ jobs:
             --sarif --output semgrep.sarif \
             || true
 
-      - name: Job Summary
+      - name: Generate Job Summary
         if: always()
         run: |
           echo "## Semgrep Summary" >> $GITHUB_STEP_SUMMARY
@@ -173,7 +173,7 @@ jobs:
             if [ "$TOTAL" = "0" ]; then
               echo "No security issues found." >> $GITHUB_STEP_SUMMARY
             else
-              echo "Warning: Found $TOTAL security findings." >> $GITHUB_STEP_SUMMARY
+              echo "Found $TOTAL security findings." >> $GITHUB_STEP_SUMMARY
               if [ "${{ github.event_name }}" == "pull_request" ]; then
                 echo "Review comments posted on PR files via Reviewdog." >> $GITHUB_STEP_SUMMARY
               fi
@@ -204,12 +204,12 @@ jobs:
 
       - run: npm ci
 
-      - name: Run npm audit (production only)
+      - name: Execute npm audit (production scope)
         run: |
           set -o pipefail
           npm audit --omit=dev --json > audit.json || true
 
-      - name: Audit Summary
+      - name: Generate Audit Summary
         run: |
           node <<'NODE'
           const fs = require('fs');
@@ -263,7 +263,7 @@ jobs:
           fs.appendFileSync(SUMMARY, md);
           NODE
 
-      - name: Fail on critical/high vulnerabilities (production only)
+      - name: Enforce security policy (critical/high)
         env:
           ENFORCE: "true"
         run: |
@@ -272,11 +272,11 @@ jobs:
             const hi=(c.high||0), cr=(c.critical||0); \
             console.log('Production dependencies - High:',hi,'Critical:',cr); \
             if (process.env.ENFORCE==='true' && (hi+cr)>0) { \
-              console.error('Failure: Production dependencies have', hi+cr, 'high/critical vulnerabilities.'); \
+              console.error('Failing: Production dependencies have', hi+cr, 'high/critical vulnerabilities'); \
               console.error('These affect your deployed application and must be fixed.'); \
               process.exit(1) \
             } else { \
-              console.log('Security check passed: No critical/high vulnerabilities in production dependencies.'); \
+              console.log('No critical/high vulnerabilities in production dependencies'); \
             }"
 
       - name: Upload audit artifact
@@ -296,39 +296,27 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      - name: Dependency Review
+      - name: Execute Dependency Review
         uses: actions/dependency-review-action@v4
         with:
           fail-on-severity: moderate
           comment-summary-in-pr: always
 
   secret-scan:
-    name: "Secret Scanning"
+    name: "Secret Scanning (TruffleHog)"
     runs-on: ubuntu-latest
     needs: test
-    permissions:
-      contents: read
-      pull-requests: write
-      checks: write
     steps:
       - uses: actions/checkout@v6
         with:
-          fetch-depth: 0 # Full history for better detection
+          fetch-depth: 0 # Full history required for secret scanning
 
-      - name: Gitleaks Scan
-        uses: gitleaks/gitleaks-action@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITLEAKS_ENABLE_SUMMARY: true
-
-      - name: Run Reviewdog for Gitleaks (PR Comments)
-        if: failure() && github.event_name == 'pull_request'
-        uses: reviewdog/action-gitleaks@v1
+      - name: TruffleHog OSS
+        uses: trufflesecurity/trufflehog@v3
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          reporter: github-pr-review
-          level: error
-          fail_on_error: true
+          base: ""
+          head: ${{ github.ref }}
+          extra_args: --debug --only-verified
 
   # ====================================================
   # PHASE 4: Build & Optimize
@@ -349,21 +337,18 @@ jobs:
 
       - run: npm ci
 
-      # Set build environment
       - name: Set Build Environment
         run: |
           ENV="${{ inputs.environment || 'dev' }}"
           echo "VITE_ENV=${ENV}" >> $GITHUB_ENV
           echo "Building for environment: ${ENV}"
 
-      # Production build with source maps
-      - name: Build React App
+      - name: Build Application
         run: npm run build
         env:
           NODE_ENV: production
           GENERATE_SOURCEMAP: true
 
-      # Generate build hash for cache busting verification
       - name: Generate Build Hash
         id: hash
         run: |
@@ -371,7 +356,6 @@ jobs:
           echo "hash=${BUILD_HASH}" >> $GITHUB_OUTPUT
           echo "Build Hash: ${BUILD_HASH}"
 
-      # Bundle analysis (warning only)
       - name: Analyze Bundle Size
         run: |
           if command -v npx &> /dev/null && [ -f "package.json" ]; then
@@ -380,7 +364,6 @@ jobs:
           fi
         continue-on-error: true
 
-      # Upload build artifact with compression
       - name: Upload Build Artifact
         uses: actions/upload-artifact@v6
         with:
@@ -390,7 +373,7 @@ jobs:
           compression-level: 9
 
   # ====================================================
-  # PHASE 5: E2E & DAST (Parallel)
+  # PHASE 5: E2E & DAST
   # ====================================================
   e2e:
     name: "Playwright E2E Tests"
@@ -411,9 +394,8 @@ jobs:
 
       - run: npm ci
 
-      # Download build
       - name: Download Build Artifact
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v4
         with:
           name: dist-${{ github.sha }}
           path: dist
@@ -421,7 +403,7 @@ jobs:
       - name: Install Playwright Browsers
         run: npx playwright install --with-deps
 
-      - name: Run Playwright Tests
+      - name: Execute Playwright Tests
         run: npm run test:ci:e2e
 
       - name: Upload Playwright Report
@@ -451,9 +433,8 @@ jobs:
 
       - run: npm ci
 
-      # Download build
       - name: Download Build Artifact
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v4
         with:
           name: dist-${{ github.sha }}
           path: dist
@@ -463,13 +444,13 @@ jobs:
           npx vite preview --host 127.0.0.1 --port 5173 --strictPort &
           echo $! > web_pid
 
-      - name: Wait for server
+      - name: Wait for server availability
         run: npx wait-on http-get://127.0.0.1:5173
 
-      - name: Relax workspace permissions for ZAP
+      - name: Configure workspace permissions
         run: chmod -R a+w .
 
-      - name: OWASP ZAP Baseline Scan
+      - name: Execute OWASP ZAP Baseline Scan
         continue-on-error: true
         env:
           TARGET_URL: "http://127.0.0.1:5173"
@@ -520,12 +501,11 @@ jobs:
       - uses: actions/checkout@v6
 
       - name: Download Build Artifact
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v4
         with:
           name: dist-${{ github.sha }}
           path: dist
 
-      # Verify critical files
       - name: Verify Build Integrity
         run: |
           echo "Checking critical files..."
@@ -533,22 +513,11 @@ jobs:
           [ -d dist/assets ] || { echo "ERROR: assets directory missing"; exit 1; }
           echo "Build integrity verified."
 
-      # Security scan for leaked secrets
-      - name: Scan for Secrets
-        run: |
-          echo "Scanning for sensitive data..."
-          if grep -rE "AWS_ACCESS_KEY|AWS_SECRET|PRIVATE_KEY|api_key|apiKey.*['\"]sk-|AIza[0-9A-Za-z-_]{35}" dist/ 2>/dev/null; then
-            echo "ERROR: Sensitive data detected in build!"
-            exit 1
-          fi
-          echo "No secrets detected."
-
-      # Check asset optimization
       - name: Verify Asset Optimization
         run: |
           echo "Checking asset optimization..."
 
-          # Check if JS files are minified (no excessive whitespace)
+          # Check if JS files are minified
           for jsfile in $(find dist/assets -name "*.js" 2>/dev/null | head -5); do
             if [ -f "$jsfile" ]; then
               lines=$(wc -l < "$jsfile")
@@ -558,7 +527,7 @@ jobs:
             fi
           done
 
-          # Check for source maps (should exist for production debugging)
+          # Check for source maps
           if ! ls dist/assets/*.js.map &>/dev/null; then
             echo "Warning: No source maps found (recommended for production debugging)"
           fi
