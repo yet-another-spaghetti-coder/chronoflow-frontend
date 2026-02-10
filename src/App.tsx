@@ -1,27 +1,44 @@
 import { RouterProvider } from "react-router-dom";
 import router from "./router/route";
 import { useEffect, useState } from "react";
-import { refresh } from "./api/authApi";
+import {
+  MobileAuthenticationError,
+  refresh,
+  refreshMobile,
+} from "./api/authApi";
 import { useSessionKeepAlive } from "@/hooks/system/useSessionKeepAlive";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "./lib/query-client";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
-
+import Cookie from "js-cookie";
 function AuthBootstrap({ children }: { children: React.ReactNode }) {
   const [ready, setReady] = useState(false);
-
+  const [mobileAuthStatus, setMobileAuthStatus] = useState<boolean | null>(
+    null,
+  );
   useEffect(() => {
     (async () => {
       try {
-        // Hydrate user from cookie on app start
-        await refresh();
-      } catch {
+        const jwt = Cookie.get("jwtToken");
+        if (!jwt) {
+          // Hydrate user from cookie on app start for web
+          await refresh();
+        } else {
+          setReady(false);
+          // Exchange JWT for cookie for mobile
+          await refreshMobile(jwt);
+          setReady(true);
+        }
+      } catch (err) {
+        if (err instanceof MobileAuthenticationError) {
+          setMobileAuthStatus(false);
+        }
         // ignore; user just isn't logged in
       }
       setReady(true);
     })();
   }, []);
-
+  if (mobileAuthStatus === false) return null;
   if (!ready) return null; // or a spinner/skeleton
   return <>{children}</>;
 }
