@@ -2,7 +2,6 @@ import { RouterProvider } from "react-router-dom";
 import router from "./router/route";
 import { useEffect, useState } from "react";
 import {
-  MobileAuthenticationError,
   refresh,
   refreshMobile,
 } from "./api/authApi";
@@ -11,36 +10,43 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "./lib/query-client";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import Cookie from "js-cookie";
+import type { MobileStatus } from "./lib/auth-type";
 function AuthBootstrap({ children }: { children: React.ReactNode }) {
   const [ready, setReady] = useState(false);
-  const [mobileAuthStatus, setMobileAuthStatus] = useState<boolean | null>(
-    null,
-  );
+  const [mobileStatus, setMobileStatus] = useState<MobileStatus>({
+    isMobile: false,
+    errStatus: false
+  });
   useEffect(() => {
     (async () => {
-      try {
-        const jwt = Cookie.get("jwtToken");
-        if (!jwt) {
-          // Hydrate user from cookie on app start for web
-          await refresh();
-        } else {
-          setReady(false);
-          // Exchange JWT for cookie for mobile
+      const jwt = Cookie.get("token");
+      
+      if (jwt) {
+        // Mobile path
+        try {
           await refreshMobile(jwt);
-          setReady(true);
+          setMobileStatus({ isMobile: true, errStatus: false });
+        } catch (err) {
+          setMobileStatus({ isMobile: true, errStatus: true });
         }
-      } catch (err) {
-        if (err instanceof MobileAuthenticationError) {
-          setMobileAuthStatus(false);
+      } else {
+        // Web path
+        try {
+          await refresh();
+        } catch (err) {
+          // ignore; user just isn't logged in
         }
-        // ignore; user just isn't logged in
       }
+      
       setReady(true);
     })();
-  }, []);
-  if (mobileAuthStatus === false) return null;
-  if (!ready) return null; // or a spinner/skeleton
-  return <>{children}</>;
+  }, []); // Only run once on mount
+
+  if (!mobileStatus.isMobile) {
+    return ready ? <>{children}</> : null;
+  } else {
+    return mobileStatus.errStatus ? null : <>{children}</>;
+  }
 }
 
 export default function App() {
