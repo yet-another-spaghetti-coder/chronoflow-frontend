@@ -195,7 +195,7 @@ describe("authApi", () => {
       expect(mockLocalStorage.getItem).toHaveBeenCalledWith(cacheKey);
       expect(mockRevokeDeviceByToken).toHaveBeenCalledWith(fcmToken);
       expect(mockDeleteFcmToken).toHaveBeenCalled();
-      expect(mockHttpPost).toHaveBeenCalledWith("/users/system/auth/logout", {});
+      expect(mockHttpPost).toHaveBeenCalledWith("/users/auth/logout", {});
       expect(mockLocalStorage.removeItem).toHaveBeenCalledWith(cacheKey);
       expect(mockAuthStore.clear).toHaveBeenCalled();
       expect(mockConsole.log).toHaveBeenCalledWith("[Logout] Device revoked on backend");
