@@ -6,7 +6,9 @@ import {
   IconLogout,
   IconNotification,
   IconUserCircle,
+  IconShieldLock,
 } from "@tabler/icons-react"
+import { useNavigate } from "react-router-dom"
 
 import {
   Avatar,
@@ -39,6 +41,7 @@ export function NavUser({
   }
 }) {
   const { isMobile } = useSidebar()
+  const navigate = useNavigate()
 
   return (
     <SidebarMenu>
@@ -87,6 +90,10 @@ export function NavUser({
               <DropdownMenuItem>
                 <IconUserCircle />
                 Account
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate("/settings")}>
+                <IconShieldLock />
+                Security
               </DropdownMenuItem>
               <DropdownMenuItem>
                 <IconCreditCard />

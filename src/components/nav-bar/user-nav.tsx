@@ -1,4 +1,5 @@
-import { LogOut, User, ChevronDown } from "lucide-react";
+import { LogOut, User, ChevronDown, ShieldCheck } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import {
   Tooltip,
   TooltipTrigger,
@@ -17,6 +18,7 @@ import { logout } from "@/api/authApi";
 
 export function UserNav() {
   const { user } = useAuthStore();
+  const navigate = useNavigate();
 
   return (
     <DropdownMenu>
@@ -49,6 +51,11 @@ export function UserNav() {
             </p>
           </div>
         </DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem className="hover:cursor-pointer" onClick={() => navigate("/settings")}>
+          <ShieldCheck className="w-4 h-4 mr-3 text-muted-foreground" />
+          Security
+        </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem className="hover:cursor-pointer" onClick={logout}>
           <LogOut className="w-4 h-4 mr-3 text-muted-foreground" />

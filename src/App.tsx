@@ -6,6 +6,10 @@ import { useSessionKeepAlive } from "@/hooks/system/useSessionKeepAlive";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "./lib/query-client";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+import { initFirebase } from "@/lib/firebase/firebaseUtils";
+
+// Initialize Firebase on app load
+initFirebase();
 
 function AuthBootstrap({ children }: { children: React.ReactNode }) {
   const [ready, setReady] = useState(false);

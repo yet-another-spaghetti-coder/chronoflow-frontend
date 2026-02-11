@@ -7,6 +7,8 @@ export type User = {
 
 export interface AuthCredentials {
   user: User;
+  mfaRequired?: boolean;
+  mfaToken?: string;
 }
 
 export interface AuthState {
