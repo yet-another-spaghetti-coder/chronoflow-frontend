@@ -27,13 +27,14 @@ function AuthBootstrap({ children }: { children: React.ReactNode }) {
           await refreshMobile(jwt);
           setMobileStatus({ isMobile: true, errStatus: false });
         } catch (err) {
+          console.error("Mobile refresh failed", err);
           setMobileStatus({ isMobile: true, errStatus: true });
         }
       } else {
         // Web path
         try {
           await refresh();
-        } catch (err) {
+        } catch {
           // ignore; user just isn't logged in
         }
       }

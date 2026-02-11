@@ -86,7 +86,7 @@ export async function refreshMobile(jwt: string): Promise<boolean> {
     const { user } = r.data?.data ?? {};
     if (user) setAuthFromServer({ user });
     return true;
-  } catch (e) {
+  } catch {
     throw new MobileAuthenticationError("Failed to refresh mobile session");
   }
 }
