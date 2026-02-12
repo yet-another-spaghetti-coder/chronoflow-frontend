@@ -4,6 +4,7 @@ import {
   ListChecks,
   Building2,
   UserRoundPlus,
+  ScrollText,
   type LucideIcon,
 } from "lucide-react";
 
@@ -19,10 +20,12 @@ export type Group = { groupLabel: string; menus: Menu[] };
 
 export function getMenuList(
   pathname: string,
-  opts: { hasUser: boolean }
+  opts: { hasUser: boolean; role?: string }
 ): Group[] {
-  const { hasUser } = opts;
+  const { hasUser, role } = opts;
   if (!hasUser) return [];
+
+  const isAdmin = role?.includes("ADMIN") ?? false;
 
   const selectedEventId = pathname.match(/^\/event\/([^/]+)/)?.[1] ?? null;
 
@@ -64,6 +67,17 @@ export function getMenuList(
             submenus: [],
             icon: Building2,
           },
+          ...(isAdmin
+            ? [
+                {
+                  href: "/audit-logs",
+                  label: "Audit Logs",
+                  active: pathname === "/audit-logs",
+                  submenus: [] as Submenu[],
+                  icon: ScrollText,
+                },
+              ]
+            : []),
         ],
       },
     ];

@@ -16,6 +16,7 @@ import SpecificCheckinAttendeesPage from "@/pages/checkin-attendees";
 import StaffScanPage from "@/pages/checkin-attendees/staff-scan";
 import AttendeeScanPage from "@/pages/checkin-attendees/attendee-scan";
 import SettingsPage from "@/pages/settings";
+import AuditLogsPage from "@/pages/audit-logs";
 
 const router = createBrowserRouter([
   {
@@ -63,6 +64,11 @@ const router = createBrowserRouter([
           {
             path: "event-attendees/staff-scan",
             element: <StaffScanPage />,
+          },
+          // Audit logs
+          {
+            path: "audit-logs",
+            element: <AuditLogsPage />,
           },
           // Settings page
           {
