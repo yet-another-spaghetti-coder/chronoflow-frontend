@@ -50,7 +50,7 @@ export async function logout() {
     }
 
     //Tell your backend to log out session
-    await http.post("/users/system/auth/logout", {});
+    await http.post("/users/auth/logout", {});
   } catch (e) {
     console.warn("[Logout] Logout request failed:", e);
   } finally {
@@ -79,4 +79,20 @@ export function refresh(): Promise<boolean> {
   })();
 
   return refreshing;
+}
+export async function refreshMobile(jwt: string): Promise<boolean> {
+  try {
+    const r = await http.post("/users/auth/mobileSsoLogin", jwt);
+    const { user } = r.data?.data ?? {};
+    if (user) setAuthFromServer({ user });
+    return true;
+  } catch {
+    throw new MobileAuthenticationError("Failed to refresh mobile session");
+  }
+}
+export class MobileAuthenticationError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "MobileAuthenticationError";
+  }
 }
