@@ -682,3 +682,33 @@ export const MarkOpenedResponseSchema = z.object({
 });
 
 export type NotificationFeed = z.infer<typeof NotificationFeedSchema>;
+
+//Attendee Dashboard
+export const attendeeSimpleSchema = z.object({
+  name: z.string().nullable().optional(),
+  email: z.string().nullable().optional(),
+  mobile: z.string().nullable().optional(),
+  createTime: z.string().nullable().optional(),
+});
+
+export const attendeeDashboardSchema = z.object({
+  summary: z.object({
+    checkedIn: z.coerce.number(),
+    nonCheckedIn: z.coerce.number(),
+  }),
+  attendees: z.object({
+    items: z.array(
+      z.object({
+        name: z.string().nullable().optional(),
+        email: z.string().nullable().optional(),
+        mobile: z.string().nullable().optional(),
+        createTime: z.string().nullable().optional(),
+      })
+    ),
+    page: z.coerce.number(),
+    pageSize: z.coerce.number(),
+    total: z.coerce.number(),
+  }),
+});
+
+export type AttendeeDashboard = z.infer<typeof attendeeDashboardSchema>;

@@ -1,8 +1,10 @@
 import { http } from "@/lib/http";
 import { unwrap } from "@/lib/utils";
 import {
+  attendeeDashboardSchema,
   attendeesResponseSchema,
   type Attendee,
+  type AttendeeDashboard,
   type IndiAttendeeConfig,
 } from "@/lib/validation/schema";
 
@@ -60,4 +62,16 @@ export async function deleteAttendee(
 ): Promise<boolean> {
   const res = await http.delete(`/attendees/${attendeeId}`);
   return unwrap<boolean>(res.data);
+}
+
+export async function getAttendeeDashboard(
+  eventId: string | number,
+  page = 1,
+  pageSize = 20
+): Promise<AttendeeDashboard> {
+  const res = await http.get(`/attendees/dashboard/${encodeURIComponent(String(eventId))}`, {
+    params: { page, pageSize },
+  });
+  const raw = unwrap(res.data);
+  return attendeeDashboardSchema.parse(raw);
 }

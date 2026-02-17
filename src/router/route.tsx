@@ -6,7 +6,6 @@ import RootPage from "@/pages/Root";
 import LoginPage from "@/pages/login";
 import OrganisationPage from "@/pages/organisation";
 import OrgEventsPage from "@/pages/events";
-import SpecificEventDashboardPage from "@/pages/event-dashboard";
 import SpecificEventGroupsPage from "@/pages/event-groups";
 import SpecificEventTasksPage from "@/pages/event-tasks";
 import OrganiserDashboardPage from "@/pages/organiser-dashboard";
@@ -15,6 +14,7 @@ import SpecificEventAttendeesPage from "@/pages/event-attendees";
 import SpecificCheckinAttendeesPage from "@/pages/checkin-attendees";
 import StaffScanPage from "@/pages/checkin-attendees/staff-scan";
 import AttendeeScanPage from "@/pages/checkin-attendees/attendee-scan";
+import EventDashboardPage from "@/pages/event-dashboard";
 
 const router = createBrowserRouter([
   {
@@ -40,7 +40,7 @@ const router = createBrowserRouter([
           { path: "events", element: <OrgEventsPage /> },
           {
             path: "event/:id/dashboard",
-            element: <SpecificEventDashboardPage />,
+            element: <EventDashboardPage />,
           },
           {
             path: "event/:id/groups",
