@@ -18,53 +18,61 @@ export function NotificationInitializer() {
   useEffect(() => {
     (async () => {
       if (!user?.id || !vapidKey) return;
-      if (!(await isFcmSupported())) return;
+
+      const supported = await isFcmSupported();
+      if (!supported) {
+        console.warn("[FCM] Not supported in this browser.");
+        return;
+      }
 
       const cacheKey = `fcm_token_${user.id}`;
 
       const persistAndRegister = async (token: string) => {
         const cached = localStorage.getItem(cacheKey);
-        if (cached === token) return; // no-op
+        if (cached === token) return;
+
         localStorage.setItem(cacheKey, token);
+
         try {
-          await registerDevice({ userId: user.id, token });
+          await registerDevice({ token });
         } catch (err) {
           console.error("[FCM] Backend register failed:", err);
         }
       };
 
       const fetchAndRegister = async () => {
-        try {
-          const token = await getFcmToken(vapidKey);
-          if (token) await persistAndRegister(token);
-        } catch (err) {
-          console.error("[FCM] getFcmToken error:", err);
-        }
+        const token = await getFcmToken(vapidKey);
+        if (token) await persistAndRegister(token);
       };
 
-      // 1) If already granted: get/refresh now (covers rotation too)
+      // If already granted: register immediately (covers token rotation too)
       if (Notification.permission === "granted") {
         await fetchAndRegister();
         return;
       }
 
-      // 2) If denied: bail out
+      // If denied: stop (don’t annoy user)
       if (Notification.permission === "denied") {
         console.warn("[FCM] Notifications previously denied.");
         return;
       }
 
-      // 3) Default: ask after first user gesture
+      // Ask after first user gesture (browser requirement)
       const onFirstInteraction = async () => {
-        window.removeEventListener("click", onFirstInteraction);
-        window.removeEventListener("keydown", onFirstInteraction);
-        window.removeEventListener("scroll", onFirstInteraction);
+        cleanupGestureListeners();
+
         try {
           const permission = await Notification.requestPermission();
           if (permission === "granted") await fetchAndRegister();
         } catch (err) {
           console.error("[FCM] Permission/token flow error:", err);
         }
+      };
+
+      const cleanupGestureListeners = () => {
+        window.removeEventListener("click", onFirstInteraction);
+        window.removeEventListener("keydown", onFirstInteraction);
+        window.removeEventListener("scroll", onFirstInteraction);
       };
 
       const armGestureListeners = () => {
@@ -84,6 +92,14 @@ export function NotificationInitializer() {
           once: true,
         });
       }
+
+      // Optional cleanup (nice-to-have)
+      return () => {
+        // Best-effort: remove if still attached
+        window.removeEventListener("click", onFirstInteraction);
+        window.removeEventListener("keydown", onFirstInteraction);
+        window.removeEventListener("scroll", onFirstInteraction);
+      };
     })();
   }, [user?.id, vapidKey]);
 

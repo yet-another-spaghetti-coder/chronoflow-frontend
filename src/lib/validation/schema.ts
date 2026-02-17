@@ -587,8 +587,7 @@ export type AttendeeConfig = z.infer<typeof AttendeeConfigSchema>;
 //Push Notification Device Registration
 export const PushPlatformEnum = z.enum(["WEB", "ANDROID", "IOS"]);
 export const PushNotificationDeviceRegistrationSchema = z.object({
-  userId: z.string().min(1, "User ID is required"),
-  token: z.string().min(1, "Token is required"),
+  token: z.string().trim().min(1, "Token is required"),
   platform: PushPlatformEnum.optional(),
 });
 export type PushNotificationDeviceRegistration = z.infer<
@@ -599,30 +598,6 @@ export const RevokeDeviceByTokenSchema = z.object({
   token: z.string().min(1, "Token is required"),
 });
 export type RevokeDeviceByToken = z.infer<typeof RevokeDeviceByTokenSchema>;
-
-export const RevokeAllDevicesForUserSchema = z.object({
-  userId: z.string().min(1, "User ID is required"),
-});
-export type RevokeAllDevicesForUser = z.infer<
-  typeof RevokeAllDevicesForUserSchema
->;
-
-export const NotificationDeviceSchema = z.object({
-  id: z.string().or(z.number()),
-  userId: z.string(),
-  token: z.string(),
-  platform: z.string(),
-  status: z.string(),
-  createTime: z.string().optional(),
-  updateTime: z.string().optional(),
-});
-
-export type NotificationDevice = z.infer<typeof NotificationDeviceSchema>;
-
-export const ActiveDevicesQuerySchema = z.object({
-  userId: z.string().min(1, "User ID is required"),
-});
-export type ActiveDevicesQuery = z.infer<typeof ActiveDevicesQuerySchema>;
 
 //Web socket Notification Feed
 const coerceToISO = (v: string | number | Date): string => {
