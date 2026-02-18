@@ -23,7 +23,7 @@ export const organizerRegistrationSchema = z.object({
     .min(6, "Invalid username")
     .regex(
       /^[a-zA-Z0-9._-]+$/,
-      "Only letters, numbers, dot, underscore, hyphen"
+      "Only letters, numbers, dot, underscore, hyphen",
     ),
   user_password: z
     .string()
@@ -73,7 +73,7 @@ export const memberCompleteRegistrationSchema = z.object({
     .min(6, "Username must be at least 6 characters")
     .regex(
       /^[a-zA-Z0-9._-]+$/,
-      "Only letters, numbers, dot, underscore, hyphen"
+      "Only letters, numbers, dot, underscore, hyphen",
     ),
   user_password: z.string().min(8, "Password must be at least 8 characters"),
   user_mobile: z
@@ -206,7 +206,7 @@ export const OrgEventSchema = z
         z.object({
           id: z.string(),
           name: z.string().nullable(),
-        })
+        }),
       )
       .optional()
       .default([]),
@@ -223,7 +223,7 @@ export const OrgEventSchema = z
     {
       message: "End time cannot be earlier than start time",
       path: ["endTime"],
-    }
+    },
   );
 
 export type OrgEvent = z.infer<typeof OrgEventSchema>;
@@ -376,24 +376,26 @@ export const eventTaskSchema = z.object({
         z.object({
           id: z.string(),
           name: z.string(),
-        })
+        }),
       )
       .nullable(),
   }),
-  assignedUser: z.object({
-    id: z.string(),
-    name: z.string(),
-    email: z.string().nullable(),
-    phone: z.string().nullable(),
-    groups: z
-      .array(
-        z.object({
-          id: z.string(),
-          name: z.string(),
-        })
-      )
-      .nullable(),
-  }).nullable(),
+  assignedUser: z
+    .object({
+      id: z.string(),
+      name: z.string(),
+      email: z.string().nullable(),
+      phone: z.string().nullable(),
+      groups: z
+        .array(
+          z.object({
+            id: z.string(),
+            name: z.string(),
+          }),
+        )
+        .nullable(),
+    })
+    .nullable(),
 });
 
 export const eventTaskListSchema = z.array(eventTaskSchema);
@@ -413,7 +415,7 @@ export const eventTaskCreateConfigSchema = z
       .array(
         z.instanceof(File, {
           message: "Each item must be a valid file",
-        })
+        }),
       )
       .optional(),
   })
@@ -438,8 +440,8 @@ export const eventTaskConfigSchema = z
       .union(
         allowedActions.map((a) => z.literal(a)) as [
           z.ZodLiteral<AllowAction>,
-          ...z.ZodLiteral<AllowAction>[]
-        ]
+          ...z.ZodLiteral<AllowAction>[],
+        ],
       )
       .optional()
       .describe("Task action type (only valid update actions allowed)"),
@@ -492,7 +494,7 @@ export const eventGroupWithAssignableMembersSchema = z.object({
 });
 
 export const assignableMembersResponseSchema = z.array(
-  eventGroupWithAssignableMembersSchema
+  eventGroupWithAssignableMembersSchema,
 );
 
 export type AssignableMember = z.infer<typeof assignableMemberSchema>;
@@ -587,6 +589,7 @@ export type AttendeeConfig = z.infer<typeof AttendeeConfigSchema>;
 //Push Notification Device Registration
 export const PushPlatformEnum = z.enum(["WEB", "ANDROID", "IOS"]);
 export const PushNotificationDeviceRegistrationSchema = z.object({
+  deviceId: z.string().trim().min(1, "Device ID is required"),
   token: z.string().trim().min(1, "Token is required"),
   platform: PushPlatformEnum.optional(),
 });
@@ -605,9 +608,9 @@ const coerceToISO = (v: string | number | Date): string => {
     v instanceof Date
       ? v
       : typeof v === "string"
-      ? new Date(v)
-      : // number: treat < 1e12 as seconds, otherwise ms
-        new Date(v < 1_000_000_000_000 ? v * 1000 : v);
+        ? new Date(v)
+        : // number: treat < 1e12 as seconds, otherwise ms
+          new Date(v < 1_000_000_000_000 ? v * 1000 : v);
 
   if (Number.isNaN(d.getTime())) {
     throw new Error("Invalid date");
@@ -678,7 +681,7 @@ export const attendeeDashboardSchema = z.object({
         email: z.string().nullable().optional(),
         mobile: z.string().nullable().optional(),
         createTime: z.string().nullable().optional(),
-      })
+      }),
     ),
     page: z.coerce.number(),
     pageSize: z.coerce.number(),

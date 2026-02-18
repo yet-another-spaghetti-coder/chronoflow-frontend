@@ -17,7 +17,7 @@ export function unwrap<T>(res: ApiResponse<T>): T {
 
 export function getDropDownValues<T extends Record<string, unknown>>(
   data: T[],
-  selector: string
+  selector: string,
 ) {
   const toStr = (v: unknown): string => {
     if (v == null) return "";
@@ -26,7 +26,7 @@ export function getDropDownValues<T extends Record<string, unknown>>(
   };
 
   const unique = new Set<string>(
-    data.map((item) => toStr((item as Record<string, unknown>)[selector]))
+    data.map((item) => toStr((item as Record<string, unknown>)[selector])),
   );
 
   return Array.from(unique)
@@ -37,7 +37,7 @@ export function getDropDownValues<T extends Record<string, unknown>>(
 
 export async function exportToExcel<T extends Record<string, unknown>>(
   jsonData: T[],
-  fileName: string = "data"
+  fileName: string = "data",
 ): Promise<void> {
   if (!jsonData || jsonData.length === 0) return;
 
@@ -54,10 +54,10 @@ export async function exportToExcel<T extends Record<string, unknown>>(
 
   const date = new Date();
   const formattedDate = `${date.getFullYear()}${String(
-    date.getMonth() + 1
+    date.getMonth() + 1,
   ).padStart(2, "0")}${String(date.getDate()).padStart(2, "0")}`;
   const formattedTime = `${String(date.getHours()).padStart(2, "0")}${String(
-    date.getMinutes()
+    date.getMinutes(),
   ).padStart(2, "0")}${String(date.getSeconds()).padStart(2, "0")}`;
   const formattedFileName = `${formattedDate}-${formattedTime}-${fileName}.xlsx`;
 
@@ -78,4 +78,16 @@ export function timeAgo(iso: string | number | Date): string {
   if (h < 24) return `${h}h`;
   const d = Math.floor(h / 24);
   return `${d}d`;
+}
+
+export async function sha256Base64Url(input: string): Promise<string> {
+  const data = new TextEncoder().encode(input);
+  const digest = await crypto.subtle.digest("SHA-256", data);
+  const bytes = new Uint8Array(digest);
+
+  // base64url
+  let bin = "";
+  bytes.forEach((b) => (bin += String.fromCharCode(b)));
+  const b64 = btoa(bin);
+  return b64.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
 }
