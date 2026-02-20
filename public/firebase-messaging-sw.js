@@ -29,7 +29,6 @@ messaging.onBackgroundMessage((payload) => {
   self.registration.showNotification(title, options);
 });
 
-// Click handler → open/focus app and pass notifId via URL
 self.addEventListener("notificationclick", (event) => {
   event.notification?.close();
 
@@ -40,7 +39,7 @@ self.addEventListener("notificationclick", (event) => {
 
   event.waitUntil(
     (async () => {
-      // Build URL: /?openNotif=1&notifId=xxx
+
       const url = new URL("/", self.location.origin);
       url.searchParams.set("openNotif", "1");
       if (notifId) url.searchParams.set("notifId", String(notifId));

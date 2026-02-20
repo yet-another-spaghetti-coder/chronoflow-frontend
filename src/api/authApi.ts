@@ -74,19 +74,23 @@ export function refresh(): Promise<boolean> {
 
   return refreshing;
 }
-export async function refreshMobile(jwt: string): Promise<boolean> {
-  try {
-    const r = await http.post("/users/auth/mobileSsoLogin", jwt);
-    const { user } = r.data?.data ?? {};
-    if (user) setAuthFromServer({ user });
-    return true;
-  } catch {
-    throw new MobileAuthenticationError("Failed to refresh mobile session");
-  }
-}
-export class MobileAuthenticationError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = "MobileAuthenticationError";
-  }
+
+export function refreshMobile(token: string): Promise<boolean> {
+  if (refreshing) return refreshing;
+
+  refreshing = (async () => {
+    try {
+      const r = await http.post("/users/auth/validateOTT", token);
+      const { user } = r.data?.data ?? {};
+      if (user) setAuthFromServer({ user });
+      return true;
+    } catch {
+      useAuthStore.getState().clear();
+      return false;
+    } finally {
+      refreshing = null;
+    }
+  })();
+
+  return refreshing;
 }
