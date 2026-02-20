@@ -50,7 +50,7 @@ export async function logout() {
     }
 
     //Tell your backend to log out session
-    await http.post("/users/system/auth/logout", {});
+    await http.post("/users/auth/logout", {});
   } catch (e) {
     console.warn("[Logout] Logout request failed:", e);
   } finally {
@@ -67,6 +67,26 @@ export function refresh(): Promise<boolean> {
   refreshing = (async () => {
     try {
       const r = await http.post("/users/auth/refresh", {});
+      const { user } = r.data?.data ?? {};
+      if (user) setAuthFromServer({ user });
+      return true;
+    } catch {
+      useAuthStore.getState().clear();
+      return false;
+    } finally {
+      refreshing = null;
+    }
+  })();
+
+  return refreshing;
+}
+
+export function refreshMobile(token: string): Promise<boolean> {
+  if (refreshing) return refreshing;
+
+  refreshing = (async () => {
+    try {
+      const r = await http.post("/users/auth/validateOTT", token);
       const { user } = r.data?.data ?? {};
       if (user) setAuthFromServer({ user });
       return true;
