@@ -1,22 +1,33 @@
 import { http } from "@/lib/http";
 import {
   PushNotificationDeviceRegistrationSchema,
-  RevokeAllDevicesForUserSchema,
   RevokeDeviceByTokenSchema,
   type PushNotificationDeviceRegistration,
 } from "@/lib/validation/schema";
 
+export function getOrCreateDeviceId(): string {
+  const key = "push_device_id";
+  let id = localStorage.getItem(key);
+  if (!id) {
+    id = crypto.randomUUID();
+    localStorage.setItem(key, id);
+  }
+  return id;
+}
+
 export async function registerDevice(
-  input: PushNotificationDeviceRegistration
+  input: PushNotificationDeviceRegistration,
 ): Promise<void> {
   const parsed = PushNotificationDeviceRegistrationSchema.parse(input);
-  const qs = new URLSearchParams({ userId: parsed.userId }).toString();
 
-  const body: Record<string, unknown> = { token: parsed.token.trim() };
+  const body: Record<string, unknown> = {
+    token: parsed.token.trim(),
+    deviceId: parsed.deviceId.trim(),
+  };
   if (parsed.platform) body.platform = parsed.platform;
 
   try {
-    await http.post(`/notifications/push/devices/register?${qs}`, body);
+    await http.post(`/notifications/push/devices/register`, body);
   } catch (err: unknown) {
     let msg = "Unknown error";
     const axiosLike = (err as { response?: { data?: unknown } })?.response
@@ -38,39 +49,13 @@ export async function registerDevice(
   }
 }
 
-export async function revokeDeviceByToken(token: string): Promise<void> {
-  const { token: t } = RevokeDeviceByTokenSchema.parse({ token });
-  const qs = new URLSearchParams({ token: t.trim() }).toString();
-
-  try {
-    await http.post(`/notifications/push/devices/revoke?${qs}`);
-  } catch (err: unknown) {
-    let msg = "Unknown error";
-    const axiosLike = (err as { response?: { data?: unknown } })?.response
-      ?.data;
-    if (typeof axiosLike === "string") {
-      msg = axiosLike;
-    } else if (
-      axiosLike &&
-      typeof axiosLike === "object" &&
-      "message" in axiosLike
-    ) {
-      const maybeMsg = (axiosLike as { message?: unknown }).message;
-      if (typeof maybeMsg === "string") msg = maybeMsg;
-    } else if (err instanceof Error) {
-      msg = err.message;
-    }
-    console.error("[FCM] Device revocation failed:", msg);
-    throw err;
-  }
+export async function revokeSelf(deviceId: string): Promise<void> {
+  await http.post(`/notifications/push/devices/revoke-self`, { deviceId });
 }
 
-export async function revokeAllDevicesForUser(userId: string): Promise<void> {
-  const { userId: id } = RevokeAllDevicesForUserSchema.parse({ userId });
-  const qs = new URLSearchParams({ userId: id }).toString();
-
+export async function revokeAllDevicesForUser(): Promise<void> {
   try {
-    await http.post(`/notifications/push/devices/revoke-all?${qs}`);
+    await http.post(`/notifications/push/devices/revoke-all`);
   } catch (err: unknown) {
     let msg = "Unknown error";
     const axiosLike = (err as { response?: { data?: unknown } })?.response
@@ -91,3 +76,5 @@ export async function revokeAllDevicesForUser(userId: string): Promise<void> {
     throw err;
   }
 }
+
+

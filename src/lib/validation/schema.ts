@@ -23,7 +23,7 @@ export const organizerRegistrationSchema = z.object({
     .min(6, "Invalid username")
     .regex(
       /^[a-zA-Z0-9._-]+$/,
-      "Only letters, numbers, dot, underscore, hyphen"
+      "Only letters, numbers, dot, underscore, hyphen",
     ),
   user_password: z
     .string()
@@ -73,7 +73,7 @@ export const memberCompleteRegistrationSchema = z.object({
     .min(6, "Username must be at least 6 characters")
     .regex(
       /^[a-zA-Z0-9._-]+$/,
-      "Only letters, numbers, dot, underscore, hyphen"
+      "Only letters, numbers, dot, underscore, hyphen",
     ),
   user_password: z.string().min(8, "Password must be at least 8 characters"),
   user_mobile: z
@@ -206,7 +206,7 @@ export const OrgEventSchema = z
         z.object({
           id: z.string(),
           name: z.string().nullable(),
-        })
+        }),
       )
       .optional()
       .default([]),
@@ -223,7 +223,7 @@ export const OrgEventSchema = z
     {
       message: "End time cannot be earlier than start time",
       path: ["endTime"],
-    }
+    },
   );
 
 export type OrgEvent = z.infer<typeof OrgEventSchema>;
@@ -376,24 +376,26 @@ export const eventTaskSchema = z.object({
         z.object({
           id: z.string(),
           name: z.string(),
-        })
+        }),
       )
       .nullable(),
   }),
-  assignedUser: z.object({
-    id: z.string(),
-    name: z.string(),
-    email: z.string().nullable(),
-    phone: z.string().nullable(),
-    groups: z
-      .array(
-        z.object({
-          id: z.string(),
-          name: z.string(),
-        })
-      )
-      .nullable(),
-  }).nullable(),
+  assignedUser: z
+    .object({
+      id: z.string(),
+      name: z.string(),
+      email: z.string().nullable(),
+      phone: z.string().nullable(),
+      groups: z
+        .array(
+          z.object({
+            id: z.string(),
+            name: z.string(),
+          }),
+        )
+        .nullable(),
+    })
+    .nullable(),
 });
 
 export const eventTaskListSchema = z.array(eventTaskSchema);
@@ -413,7 +415,7 @@ export const eventTaskCreateConfigSchema = z
       .array(
         z.instanceof(File, {
           message: "Each item must be a valid file",
-        })
+        }),
       )
       .optional(),
   })
@@ -438,8 +440,8 @@ export const eventTaskConfigSchema = z
       .union(
         allowedActions.map((a) => z.literal(a)) as [
           z.ZodLiteral<AllowAction>,
-          ...z.ZodLiteral<AllowAction>[]
-        ]
+          ...z.ZodLiteral<AllowAction>[],
+        ],
       )
       .optional()
       .describe("Task action type (only valid update actions allowed)"),
@@ -492,7 +494,7 @@ export const eventGroupWithAssignableMembersSchema = z.object({
 });
 
 export const assignableMembersResponseSchema = z.array(
-  eventGroupWithAssignableMembersSchema
+  eventGroupWithAssignableMembersSchema,
 );
 
 export type AssignableMember = z.infer<typeof assignableMemberSchema>;
@@ -587,8 +589,8 @@ export type AttendeeConfig = z.infer<typeof AttendeeConfigSchema>;
 //Push Notification Device Registration
 export const PushPlatformEnum = z.enum(["WEB", "ANDROID", "IOS"]);
 export const PushNotificationDeviceRegistrationSchema = z.object({
-  userId: z.string().min(1, "User ID is required"),
-  token: z.string().min(1, "Token is required"),
+  deviceId: z.string().trim().min(1, "Device ID is required"),
+  token: z.string().trim().min(1, "Token is required"),
   platform: PushPlatformEnum.optional(),
 });
 export type PushNotificationDeviceRegistration = z.infer<
@@ -600,39 +602,15 @@ export const RevokeDeviceByTokenSchema = z.object({
 });
 export type RevokeDeviceByToken = z.infer<typeof RevokeDeviceByTokenSchema>;
 
-export const RevokeAllDevicesForUserSchema = z.object({
-  userId: z.string().min(1, "User ID is required"),
-});
-export type RevokeAllDevicesForUser = z.infer<
-  typeof RevokeAllDevicesForUserSchema
->;
-
-export const NotificationDeviceSchema = z.object({
-  id: z.string().or(z.number()),
-  userId: z.string(),
-  token: z.string(),
-  platform: z.string(),
-  status: z.string(),
-  createTime: z.string().optional(),
-  updateTime: z.string().optional(),
-});
-
-export type NotificationDevice = z.infer<typeof NotificationDeviceSchema>;
-
-export const ActiveDevicesQuerySchema = z.object({
-  userId: z.string().min(1, "User ID is required"),
-});
-export type ActiveDevicesQuery = z.infer<typeof ActiveDevicesQuerySchema>;
-
 //Web socket Notification Feed
 const coerceToISO = (v: string | number | Date): string => {
   const d =
     v instanceof Date
       ? v
       : typeof v === "string"
-      ? new Date(v)
-      : // number: treat < 1e12 as seconds, otherwise ms
-        new Date(v < 1_000_000_000_000 ? v * 1000 : v);
+        ? new Date(v)
+        : // number: treat < 1e12 as seconds, otherwise ms
+          new Date(v < 1_000_000_000_000 ? v * 1000 : v);
 
   if (Number.isNaN(d.getTime())) {
     throw new Error("Invalid date");
@@ -703,7 +681,7 @@ export const attendeeDashboardSchema = z.object({
         email: z.string().nullable().optional(),
         mobile: z.string().nullable().optional(),
         createTime: z.string().nullable().optional(),
-      })
+      }),
     ),
     page: z.coerce.number(),
     pageSize: z.coerce.number(),
@@ -712,3 +690,35 @@ export const attendeeDashboardSchema = z.object({
 });
 
 export type AttendeeDashboard = z.infer<typeof attendeeDashboardSchema>;
+
+//Notification Detail for push
+export const notificationDetailSchema = z.object({
+  notificationEvent: z.object({
+    id: z.string(),
+    type: z.string(),
+    createdAt: z.string().nullable(),
+    read: z.boolean(),
+    readAt: z.string().nullable(),
+  }),
+  actor: z.object({
+    id: z.string().nullable(),
+    name: z.string().nullable(),
+  }),
+  task: z.object({
+    id: z.string(),
+    eventId: z.string(),
+    name: z.string(),
+    description: z.string().nullable(),
+    remark: z.string().nullable(),
+    startTime: z.string().nullable(),
+    endTime: z.string().nullable(),
+  }),
+  event: z
+    .object({
+      id: z.string(),
+      name: z.string().nullable(),
+    })
+    .nullable(),
+});
+
+export type NotificationDetailRespDTO = z.infer<typeof notificationDetailSchema>;

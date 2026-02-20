@@ -1,53 +1,74 @@
-// Firebase core libraries (compat build for easy migration)
+/* public/firebase-messaging-sw.js */
+
+// Firebase compat libraries
 importScripts("https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js");
 importScripts("https://www.gstatic.com/firebasejs/9.22.1/firebase-messaging-compat.js");
 importScripts("/firebase-config.js");
 
-// Initialize Firebase inside the SW
+// Init firebase in SW
 firebase.initializeApp(self.FIREBASE_CONFIG);
 const messaging = firebase.messaging();
 
-// --- Handle background messages ---
+// Background push handler (FCM)
 messaging.onBackgroundMessage((payload) => {
-  console.log("[SW] Background message received:", payload);
+  console.log("[SW] onBackgroundMessage payload:", payload);
 
-  const title = payload.notification?.title ?? "Notification";
-  const body = payload.notification?.body ?? "";
-  const icon = payload.notification?.image ?? "/logo192.png";
-  const data = payload.data ?? {};
+  const data = payload?.data ?? {};
+  const notifId = data.notifId || data.notif_id || data.id || null;
 
+  const title = payload?.notification?.title ?? "Notification";
   const options = {
-    body,
-    icon,
-    data,
+    body: payload?.notification?.body ?? "",
+    icon: payload?.notification?.image ?? "/logo192.png",
+    // Put notifId into notification.data so click handler can read it
+    data: { ...data, notifId },
+    // Optional: prevents stacking duplicates for same notif
+    tag: notifId ? `notif-${notifId}` : undefined,
   };
 
   self.registration.showNotification(title, options);
 });
 
-// --- Optional: Handle notification click ---
 self.addEventListener("notificationclick", (event) => {
-  event.notification.close();
+  event.notification?.close();
+
+  const rawData = event.notification?.data || {};
+  const notifId = rawData.notifId || rawData.notif_id || rawData.id || null;
+
+  console.log("[SW] notificationclick notifId=", notifId, "rawData=", rawData);
 
   event.waitUntil(
     (async () => {
+
+      const url = new URL("/", self.location.origin);
+      url.searchParams.set("openNotif", "1");
+      if (notifId) url.searchParams.set("notifId", String(notifId));
+
+      console.log("[SW] target url=", url.toString());
+
       const allClients = await clients.matchAll({
         type: "window",
         includeUncontrolled: true,
       });
 
-      // Focus existing tab if available
-      const sameOrigin = allClients.find(
-        (c) => new URL(c.url).origin === self.location.origin
-      );
+      // Find any client belonging to this origin
+      const existing = allClients.find((c) => {
+        try {
+          return new URL(c.url).origin === self.location.origin;
+        } catch {
+          return false;
+        }
+      });
 
-      if (sameOrigin) {
-        await sameOrigin.focus();
+      if (existing) {
+        await existing.focus();
+        // navigate the existing tab so React can read query params
+        await existing.navigate(url.toString());
         return;
       }
 
-      // Otherwise, open app root
-      await clients.openWindow("/");
+      // else open new tab
+      await clients.openWindow(url.toString());
     })()
   );
 });

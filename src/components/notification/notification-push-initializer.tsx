@@ -1,90 +1,98 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import {
   initFirebase,
   getFcmToken,
   isFcmSupported,
 } from "@/lib/firebase/firebaseUtils";
 import { useAuthStore } from "@/stores/authStore";
-import { registerDevice } from "@/api/pushNotiApi";
+import { getOrCreateDeviceId, registerDevice } from "@/api/pushNotiApi";
+import { sha256Base64Url } from "@/lib/utils";
 
 export function NotificationInitializer() {
   const user = useAuthStore((s) => s.user);
   const vapidKey = import.meta.env.VITE_FIREBASE_VAPID_KEY as string;
+
+  const inFlightRef = useRef<Promise<void> | null>(null);
+  const armedRef = useRef(false);
 
   useEffect(() => {
     initFirebase();
   }, []);
 
   useEffect(() => {
-    (async () => {
-      if (!user?.id || !vapidKey) return;
-      if (!(await isFcmSupported())) return;
+    if (!user?.id || !vapidKey) return;
 
-      const cacheKey = `fcm_token_${user.id}`;
+    let cancelled = false;
 
-      const persistAndRegister = async (token: string) => {
-        const cached = localStorage.getItem(cacheKey);
-        if (cached === token) return; // no-op
-        localStorage.setItem(cacheKey, token);
-        try {
-          await registerDevice({ userId: user.id, token });
-        } catch (err) {
-          console.error("[FCM] Backend register failed:", err);
+    const deviceId = getOrCreateDeviceId();
+    const cacheKey = `fcm_token_hash_${user.id}_${deviceId}`;
+
+    const persistAndRegister = async (token: string) => {
+      const tokenHash = await sha256Base64Url(token);
+
+      const cachedHash = localStorage.getItem(cacheKey);
+
+      if (cachedHash === tokenHash) return;
+
+      localStorage.setItem(cacheKey, tokenHash);
+
+      await registerDevice({ token, deviceId, platform: "WEB" }); 
+    };
+
+    const fetchAndRegisterOnce = async () => {
+      if (inFlightRef.current) return inFlightRef.current;
+
+      inFlightRef.current = (async () => {
+        const supported = await isFcmSupported();
+        if (!supported || cancelled) return;
+
+        const token = await getFcmToken(vapidKey);
+        if (token && !cancelled) {
+          await persistAndRegister(token);
         }
-      };
+      })().finally(() => {
+        inFlightRef.current = null;
+      });
 
-      const fetchAndRegister = async () => {
-        try {
-          const token = await getFcmToken(vapidKey);
-          if (token) await persistAndRegister(token);
-        } catch (err) {
-          console.error("[FCM] getFcmToken error:", err);
-        }
-      };
+      return inFlightRef.current;
+    };
 
-      // 1) If already granted: get/refresh now (covers rotation too)
+    const onFirstInteraction = async () => {
+      if (armedRef.current === false) return;
+      armedRef.current = false;
+      window.removeEventListener("pointerdown", onFirstInteraction);
+
+      try {
+        const permission = await Notification.requestPermission();
+        if (permission === "granted") await fetchAndRegisterOnce();
+      } catch (e) {
+        console.error("[FCM] Permission/token flow error:", e);
+      }
+    };
+
+    const arm = async () => {
+      const supported = await isFcmSupported();
+      if (!supported || cancelled) return;
+
       if (Notification.permission === "granted") {
-        await fetchAndRegister();
+        await fetchAndRegisterOnce();
         return;
       }
+      if (Notification.permission === "denied") return;
 
-      // 2) If denied: bail out
-      if (Notification.permission === "denied") {
-        console.warn("[FCM] Notifications previously denied.");
-        return;
-      }
+      armedRef.current = true;
+      window.addEventListener("pointerdown", onFirstInteraction, {
+        once: true,
+      });
+    };
 
-      // 3) Default: ask after first user gesture
-      const onFirstInteraction = async () => {
-        window.removeEventListener("click", onFirstInteraction);
-        window.removeEventListener("keydown", onFirstInteraction);
-        window.removeEventListener("scroll", onFirstInteraction);
-        try {
-          const permission = await Notification.requestPermission();
-          if (permission === "granted") await fetchAndRegister();
-        } catch (err) {
-          console.error("[FCM] Permission/token flow error:", err);
-        }
-      };
+    arm();
 
-      const armGestureListeners = () => {
-        window.addEventListener("click", onFirstInteraction, { once: true });
-        window.addEventListener("keydown", onFirstInteraction, { once: true });
-        window.addEventListener("scroll", onFirstInteraction, { once: true });
-      };
-
-      if (document.visibilityState === "visible") {
-        armGestureListeners();
-      } else {
-        const onVisible = () => {
-          document.removeEventListener("visibilitychange", onVisible);
-          armGestureListeners();
-        };
-        document.addEventListener("visibilitychange", onVisible, {
-          once: true,
-        });
-      }
-    })();
+    return () => {
+      cancelled = true;
+      armedRef.current = false;
+      window.removeEventListener("pointerdown", onFirstInteraction);
+    };
   }, [user?.id, vapidKey]);
 
   return null;
