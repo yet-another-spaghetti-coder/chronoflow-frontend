@@ -48,7 +48,12 @@ export default defineConfig(({ mode }) => {
     optimizeDeps: {
       include: ["zustand"],
     },
-
+    server: {
+      headers: {
+        // Allow Firebase Auth popup to work by relaxing COOP
+        "Cross-Origin-Opener-Policy": "same-origin-allow-popups",
+      },
+    },
     test: {
       globals: true,
       environment: "jsdom",
