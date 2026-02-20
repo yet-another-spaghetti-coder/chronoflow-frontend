@@ -5,6 +5,11 @@ export type User = {
   role: string;
 };
 
+export type MobileStatus = {
+  isMobile:boolean;
+  errStatus: boolean;
+};
+
 export interface AuthCredentials {
   user: User;
   mfaRequired?: boolean;
