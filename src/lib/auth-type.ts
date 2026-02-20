@@ -12,6 +12,8 @@ export type MobileStatus = {
 
 export interface AuthCredentials {
   user: User;
+  mfaRequired?: boolean;
+  mfaToken?: string;
 }
 
 export interface AuthState {
