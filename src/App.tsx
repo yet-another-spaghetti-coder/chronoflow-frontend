@@ -22,7 +22,7 @@ function AuthBootstrap({ children }: { children: React.ReactNode }) {
         try {
           await refreshMobile(ott);
           setMobileStatus({ isMobile: true, errStatus: false });
-        } catch (err) {
+        } catch {
           setMobileStatus({ isMobile: true, errStatus: true });
         }
       } else {
