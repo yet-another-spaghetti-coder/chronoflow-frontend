@@ -367,9 +367,9 @@ export async function logout() {
     }
 
     // Tell your backend to log out session
-    await http.post("/users/system/auth/logout", {});
-    //Tell your backend to log out session
     await http.post("/users/auth/logout", {});
+  } catch (e) {
+    console.warn("[Logout] Logout request failed:", e);
   } finally {
     if (cacheKey) localStorage.removeItem(cacheKey);
 

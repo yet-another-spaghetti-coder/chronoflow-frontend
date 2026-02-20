@@ -10,7 +10,7 @@ export default function OrganisationPage() {
     "members"
   );
   const user = useAuthStore((s) => s.user);
-  const isAdmin = user?.role === "ADMIN";
+  const isAdmin = user?.role?.includes("ADMIN") ?? false;
 
   const tabs: TabItem[] = useMemo(() => {
     const baseTabs: TabItem[] = [

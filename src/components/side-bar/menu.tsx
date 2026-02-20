@@ -26,7 +26,7 @@ export function Menu({ isOpen }: MenuProps) {
   const user = useAuthStore((s) => s.user);
 
   const menuList = useMemo(
-    () => getMenuList(pathname, { hasUser: !!user }),
+    () => getMenuList(pathname, { hasUser: !!user, role: user?.role }),
     [pathname, user]
   );
 
