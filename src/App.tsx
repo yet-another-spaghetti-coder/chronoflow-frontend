@@ -1,26 +1,30 @@
 import { RouterProvider } from "react-router-dom";
 import router from "./router/route";
 import { useEffect, useState } from "react";
-import {
-  refresh,
-  refreshMobile,
-} from "./api/authApi";
+import Cookie from "js-cookie";
+
+import { refresh, refreshMobile } from "./api/authApi";
 import { useSessionKeepAlive } from "@/hooks/system/useSessionKeepAlive";
+
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "./lib/query-client";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
-import Cookie from "js-cookie";
+
 import type { MobileStatus } from "./lib/auth-type";
+import { useNotifClickListener } from "@/hooks/push/useNotifClickListener";
+import { NotificationDetailModal } from "@/components/ui/NotificationDetailModal";
+
 function AuthBootstrap({ children }: { children: React.ReactNode }) {
   const [ready, setReady] = useState(false);
   const [mobileStatus, setMobileStatus] = useState<MobileStatus>({
     isMobile: false,
-    errStatus: false
+    errStatus: false,
   });
+
   useEffect(() => {
     (async () => {
       const jwt = Cookie.get("token");
-      
+
       if (jwt) {
         // Mobile path
         try {
@@ -35,30 +39,37 @@ function AuthBootstrap({ children }: { children: React.ReactNode }) {
         try {
           await refresh();
         } catch {
-          // ignore; user just isn't logged in
+          // ignore: not logged in
         }
       }
-      
+
       setReady(true);
     })();
-  }, []); // Only run once on mount
+  }, []);
 
   if (!mobileStatus.isMobile) {
     return ready ? <>{children}</> : null;
-  } else {
-    return mobileStatus.errStatus ? null : <>{children}</>;
   }
+
+  return mobileStatus.errStatus ? null : <>{children}</>;
 }
 
 export default function App() {
-  // Periodic session keep-alive; bootstrap already did the first refresh.
+  // Keep session alive
   useSessionKeepAlive({ intervalMs: 10 * 60 * 1000, runOnInit: true });
+
+  // Must be global so it works no matter which page is open
+  useNotifClickListener();
 
   return (
     <QueryClientProvider client={queryClient}>
+      {/* Must be global */}
+      <NotificationDetailModal />
+
       <AuthBootstrap>
         <RouterProvider router={router} />
       </AuthBootstrap>
+
       <ReactQueryDevtools initialIsOpen={false} />
     </QueryClientProvider>
   );

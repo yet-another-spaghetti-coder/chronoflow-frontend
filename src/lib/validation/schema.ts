@@ -690,3 +690,35 @@ export const attendeeDashboardSchema = z.object({
 });
 
 export type AttendeeDashboard = z.infer<typeof attendeeDashboardSchema>;
+
+//Notification Detail for push
+export const notificationDetailSchema = z.object({
+  notificationEvent: z.object({
+    id: z.string(),
+    type: z.string(),
+    createdAt: z.string().nullable(),
+    read: z.boolean(),
+    readAt: z.string().nullable(),
+  }),
+  actor: z.object({
+    id: z.string().nullable(),
+    name: z.string().nullable(),
+  }),
+  task: z.object({
+    id: z.string(),
+    eventId: z.string(),
+    name: z.string(),
+    description: z.string().nullable(),
+    remark: z.string().nullable(),
+    startTime: z.string().nullable(),
+    endTime: z.string().nullable(),
+  }),
+  event: z
+    .object({
+      id: z.string(),
+      name: z.string().nullable(),
+    })
+    .nullable(),
+});
+
+export type NotificationDetailRespDTO = z.infer<typeof notificationDetailSchema>;
