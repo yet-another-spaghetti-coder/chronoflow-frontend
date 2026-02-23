@@ -23,7 +23,6 @@ import {
   setPersistence,
   type Auth,
   type User as FirebaseUser,
-  type UserCredential,
 } from "firebase/auth";
 
 const firebaseConfig = {
