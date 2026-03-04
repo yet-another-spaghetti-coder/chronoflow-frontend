@@ -28,7 +28,7 @@ function renderComp(
   );
 
   const $ = {
-    username: () => screen.getByLabelText(/username/i) as HTMLInputElement,
+    username: () => screen.getByLabelText(/username1/i) as HTMLInputElement,
     password: () =>
       screen.getByPlaceholderText(/at least 8 characters/i) as HTMLInputElement,
     mobile: () => screen.getByLabelText(/mobile/i) as HTMLInputElement,
