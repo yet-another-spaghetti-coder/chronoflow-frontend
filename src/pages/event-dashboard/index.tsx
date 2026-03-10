@@ -29,6 +29,7 @@ import {
   type ChartConfig,
 } from "@/components/ui/chart";
 import { getAttendeeDashboard } from "@/api/attendeeApi";
+import type { AttendeeDashboard } from "@/lib/validation/schema";
 
 function fmt(dt?: string | null) {
   if (!dt) return "-";
@@ -50,7 +51,7 @@ export default function EventDashboardPage() {
 
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
-  const [data, setData] = React.useState<any>(null);
+  const [data, setData] = React.useState<AttendeeDashboard | null>(null);
 
   async function load(p: number) {
     if (!id) return;
@@ -60,8 +61,8 @@ export default function EventDashboardPage() {
       const res = await getAttendeeDashboard(id, p, pageSize);
       setData(res);
       setPage(p);
-    } catch (e: any) {
-      setError(e?.message ?? "Failed to load dashboard");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to load dashboard");
     } finally {
       setLoading(false);
     }
@@ -164,7 +165,7 @@ export default function EventDashboardPage() {
 
                   <TableBody>
                     {data.attendees.items.length ? (
-                      data.attendees.items.map((a: any, idx: number) => (
+                      data.attendees.items.map((a, idx) => (
                         <TableRow key={`${a.email ?? "row"}-${idx}`}>
                           <TableCell className="font-medium">
                             {a.name ?? "-"}
