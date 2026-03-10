@@ -161,46 +161,50 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Show runner info
-        run: |
-          uname -a
-          pwd
-          ls -la
+      - name: Prepare output directory
+        run: mkdir -p .reports
 
-      - name: Run Trivy – generate SARIF report
-        uses: aquasecurity/trivy-action@0.33.1
-        with:
-          scan-type: fs
-          scan-ref: .
-          scanners: vuln
-          severity: CRITICAL,HIGH
-          format: sarif
-          output: trivy-results.sarif
+      - name: Pull Trivy image
+        run: docker pull aquasec/trivy:0.65.0
+
+      - name: Run Trivy - generate SARIF report
+        continue-on-error: true
+        run: |
+          docker run --rm \
+            -v "$PWD":/workspace \
+            -w /workspace \
+            aquasec/trivy:0.65.0 fs \
+            --scanners vuln \
+            --severity CRITICAL,HIGH \
+            --format sarif \
+            --output .reports/trivy-results.sarif \
+            .
 
       - name: Upload SARIF to GitHub Security tab
-        if: always()
-        uses: github/codeql-action/upload-sarif@v3
+        if: always() && hashFiles('.reports/trivy-results.sarif') != ''
+        uses: github/codeql-action/upload-sarif@v4
         with:
-          sarif_file: trivy-results.sarif
+          sarif_file: .reports/trivy-results.sarif
           category: trivy-sca
 
-      - name: Enforce – fail on CRITICAL/HIGH vulnerabilities
-        uses: aquasecurity/trivy-action@0.33.1
-        with:
-          scan-type: fs
-          scan-ref: .
-          scanners: vuln
-          severity: CRITICAL,HIGH
-          format: table
-          exit-code: "1"
+      - name: Enforce - fail on CRITICAL/HIGH vulnerabilities
+        run: |
+          docker run --rm \
+            -v "$PWD":/workspace \
+            -w /workspace \
+            aquasec/trivy:0.65.0 fs \
+            --scanners vuln \
+            --severity CRITICAL,HIGH \
+            --exit-code 1 \
+            .
 
       - name: Upload Trivy artifact
-        if: always()
+        if: always() && hashFiles('.reports/trivy-results.sarif') != ''
         uses: actions/upload-artifact@v4
         with:
           name: trivy-results-${{ github.run_id }}
-          path: trivy-results.sarif
-          retention-days: 7        
+          path: .reports/trivy-results.sarif
+          retention-days: 7
   
 
   dependency-review:
