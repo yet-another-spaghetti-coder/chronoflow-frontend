@@ -39,7 +39,7 @@ export function NotificationDetailModal() {
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && closeModal()}>
-      <DialogContent className="max-w-[720px] p-0 overflow-hidden">
+      <DialogContent className="max-w-180 p-0 overflow-hidden">
         {/* Header */}
         <div className="px-6 pt-6">
           <DialogHeader>
