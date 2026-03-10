@@ -374,7 +374,7 @@ jobs:
   firebase-preview:
     name: "Firebase Hosting – Preview Channel"
     if: github.event_name == 'pull_request'
-    # needs: [dast]
+    needs: [build]
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -423,7 +423,7 @@ jobs:
   firebase-live:
     name: "Firebase Hosting – Live Deploy"
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    # needs: [dast]
+    needs: [build]
     runs-on: ubuntu-latest
     permissions:
       contents: read
