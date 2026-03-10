@@ -34,11 +34,12 @@ export const useNotifModalStore = create<NotifModalState>((set, get) => ({
       const detail = await getNotificationDetail(notifId);
       console.log("[notif] detail parsed:", detail);
       set({ detail, loading: false, error: null });
-    } catch (e: any) {
+    } catch (e) {
       console.error("[notif] failed:", e);
-      const zodIssues = e?.issues?.map((x: any) => `${x.path?.join(".")}: ${x.message}`)?.join(" | ");
+      const err = e as { issues?: { path?: string[]; message: string }[]; message?: string };
+      const zodIssues = err?.issues?.map((x) => `${x.path?.join(".")}: ${x.message}`)?.join(" | ");
       set({
-        error: zodIssues || e?.message || "An unexpected error occurred",
+        error: zodIssues || err?.message || "An unexpected error occurred",
         loading: false,
         detail: null,
       });

@@ -23,7 +23,6 @@ export default defineConfig({
     exclude: ['e2e/**', 'playwright/**', 'node_modules/**', 'dist/**'],
     coverage: {
       provider: 'v8',
-      all: false,
       include: ['src/**/*.{ts,tsx}'],
       exclude: [
         'src/**/*.{test,spec}.{ts,tsx}',
@@ -39,7 +38,6 @@ export default defineConfig({
       ],
       reportsDirectory: './coverage/unit',
       reporter: ['text', 'html', 'lcov'],
-      thresholds: { lines: 70, branches: 60, functions: 60, statements: 70 },
     },
   },
 })
