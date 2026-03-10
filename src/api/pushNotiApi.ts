@@ -1,7 +1,6 @@
 import { http } from "@/lib/http";
 import {
   PushNotificationDeviceRegistrationSchema,
-  RevokeDeviceByTokenSchema,
   type PushNotificationDeviceRegistration,
 } from "@/lib/validation/schema";
 

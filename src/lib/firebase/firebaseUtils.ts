@@ -23,7 +23,6 @@ import {
   setPersistence,
   type Auth,
   type User as FirebaseUser,
-  type UserCredential,
 } from "firebase/auth";
 
 const firebaseConfig = {
@@ -39,7 +38,6 @@ const firebaseConfig = {
 let app: FirebaseApp | null = null;
 let auth: Auth | null = null;
 let messagingPromise: Promise<Messaging | null>;
-let authInitialized = false;
 let redirectCheckInProgress: Promise<{ user: FirebaseUser; idToken: string } | null> | null = null;
 
 export async function initFirebase(): Promise<void> {
@@ -48,7 +46,6 @@ export async function initFirebase(): Promise<void> {
     auth = getAuth(app);
     // Set persistence to local storage to survive page redirects
     await setPersistence(auth, browserLocalPersistence);
-    authInitialized = true;
     messagingPromise = isSupported().then((ok) =>
       ok ? getMessaging(app!) : null
     );

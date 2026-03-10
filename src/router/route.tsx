@@ -21,7 +21,10 @@ import AuditLogsPage from "@/pages/audit-logs";
 const router = createBrowserRouter([
   {
     path: "/login",
-    element: <LoginPage />,
+    element: <>
+    <h1>hello world</h1>
+    <LoginPage />
+    </>,
   },
 
   {
