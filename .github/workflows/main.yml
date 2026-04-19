@@ -474,3 +474,45 @@ jobs:
 
       - name: Deploy to live channel
         run: firebase deploy --only hosting --project "${{ env.FIREBASE_PROJECT_ID }}" --non-interactive --debug
+
+  # ====================================================
+  # PHASE 7: GCS Bucket Deploy
+  # ====================================================
+  gcs-deploy:
+    name: "GCS Deploy – chronoflow-frontend-dev"
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [dast]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: dist-${{ github.sha }}
+          path: dist
+
+      - name: Authenticate to Google Cloud
+        id: auth
+        uses: google-github-actions/auth@v3
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Setup gcloud
+        uses: google-github-actions/setup-gcloud@v3
+
+      - name: Sync dist to GCS bucket
+        run: |
+          gsutil -m rsync -r -d dist/ gs://chronoflow-frontend-dev/
+
+      - name: Set cache headers for hashed assets
+        if: always()
+        run: |
+          gsutil -m setmeta -h "Cache-Control: public, max-age=31536000, immutable" gs://chronoflow-frontend-dev/assets/** || true
+
+      - name: Set cache headers for HTML entry
+        if: always()
+        run: |
+          gsutil -m setmeta -h "Cache-Control: public, max-age=0, must-revalidate" gs://chronoflow-frontend-dev/index.html || true
