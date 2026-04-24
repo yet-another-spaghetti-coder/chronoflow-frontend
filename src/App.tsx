@@ -26,10 +26,21 @@ function AuthBootstrap({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     (async () => {
-      const ott = Cookie.get("token");
+      const url = new URL(window.location.href);
+      const mobileToken = url.searchParams.get("mobileToken");
+      const ott = mobileToken ?? Cookie.get("token");
 
       if (ott) {
         try {
+          Cookie.set("token", ott, {
+            path: "/",
+            sameSite: "lax",
+            secure: window.location.protocol === "https:",
+          });
+          if (mobileToken) {
+            url.searchParams.delete("mobileToken");
+            window.history.replaceState({}, "", `${url.pathname}${url.search}${url.hash}`);
+          }
           await refreshMobile(ott);
           setMobileStatus({ isMobile: true, errStatus: false });
         } catch {
