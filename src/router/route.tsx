@@ -17,11 +17,16 @@ import AttendeeScanPage from "@/pages/checkin-attendees/attendee-scan";
 import EventDashboardPage from "@/pages/event-dashboard";
 import SettingsPage from "@/pages/settings";
 import AuditLogsPage from "@/pages/audit-logs";
+import AboutPage from "@/pages/about";
 
 const router = createBrowserRouter([
   {
     path: "/login",
     element: <LoginPage />,
+  },
+  {
+    path: "/about",
+    element: <AboutPage />,
   },
 
   {
