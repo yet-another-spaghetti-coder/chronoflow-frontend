@@ -147,15 +147,6 @@ export const AuditLogColumns = (
     },
   },
   {
-    accessorKey: "userIp",
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="IP" />
-    ),
-    cell: ({ row }) => (
-      <div className="text-sm">{row.getValue("userIp") || "—"}</div>
-    ),
-  },
-  {
     id: "actions",
     header: "Details",
     cell: ({ row }) => (
