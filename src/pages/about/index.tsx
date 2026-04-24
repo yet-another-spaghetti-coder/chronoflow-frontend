@@ -1,42 +1,49 @@
-import { Calendar, Users, CheckCircle, Bell, Shield, BarChart3 } from "lucide-react";
+import { Calendar, Users, CheckCircle, Bell, ClipboardList, BarChart3, Zap, Globe } from "lucide-react";
 
 const features = [
   {
     icon: Calendar,
-    title: "Event Management",
+    title: "Effortless Event Creation",
     description:
-      "Create and manage corporate training, conferences, and community gatherings with an intuitive dashboard.",
+      "Set up corporate training, conferences, and community gatherings in minutes. No complex tools needed.",
   },
   {
     icon: Users,
     title: "Team Collaboration",
     description:
-      "Delegate tasks, manage groups, and coordinate members across your organization effortlessly.",
+      "Organize members into groups, delegate tasks, and keep everyone on the same page with shared workspaces.",
   },
   {
-    icon: CheckCircle,
-    title: "QR Check-In",
+    icon: ClipboardList,
+    title: "Smart Task Management",
     description:
-      "Streamline attendee check-in with secure, single-use QR codes and real-time attendance tracking.",
+      "Assign tasks, track progress, and manage working hours. Everyone knows what to do and when.",
   },
   {
     icon: Bell,
     title: "Real-Time Notifications",
     description:
-      "Keep everyone informed with push notifications, in-app alerts, and email updates powered by FCM and AWS SES.",
+      "Instant push notifications and email alerts keep your team informed about updates, changes, and deadlines.",
   },
   {
-    icon: Shield,
-    title: "Secure by Design",
+    icon: CheckCircle,
+    title: "QR Code Check-In",
     description:
-      "Built with OAuth 2.0, MFA, RBAC, encrypted storage, and comprehensive audit logging from day one.",
+      "Fast, contactless attendee check-in with unique QR codes. See real-time attendance at a glance.",
   },
   {
     icon: BarChart3,
-    title: "Resource Tracking",
+    title: "Budget & Resource Tracking",
     description:
-      "Monitor budgets, working hours, and materials with data-driven insights for continuous improvement.",
+      "Monitor budgets, materials, and manpower allocation. Make data-driven decisions for your next event.",
   },
+];
+
+const stats = [
+  { value: "10,000+", label: "Concurrent Users" },
+  { value: "99.9%", label: "Uptime" },
+  { value: "< 200ms", label: "Response Time" },
+  { value: "24/7", label: "Monitoring" },
 ];
 
 export default function AboutPage() {
@@ -50,38 +57,38 @@ export default function AboutPage() {
         </div>
 
         <div className="relative mx-auto max-w-5xl px-6 py-20 text-center">
-          <div className="mb-6 inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm font-medium backdrop-blur-sm">
-            <Shield className="h-4 w-4" />
-            Secure Event Collaboration Platform
-          </div>
-
           <h1 className="text-5xl font-bold tracking-tight sm:text-6xl">
             Chrono<span className="text-blue-300">Flow</span>
           </h1>
 
           <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-blue-100">
-            A lightweight, secure-by-design event collaboration system that
-            bridges the gap between complex project management tools and
-            fragmented communication channels.
+            The simplest way to plan, coordinate, and run events for your
+            organization. From small team meetings to large conferences &mdash;
+            ChronoFlow handles it all.
           </p>
 
-          <div className="mt-10 flex flex-wrap justify-center gap-4 text-sm">
-            <Stat value="OAuth 2.0 + MFA" label="Authentication" />
-            <Stat value="AES-256" label="Encryption at Rest" />
-            <Stat value="TLS 1.3" label="Encryption in Transit" />
-            <Stat value="RBAC" label="Authorization" />
+          <div className="mt-10 flex flex-wrap justify-center gap-4">
+            {stats.map((s) => (
+              <div
+                key={s.label}
+                className="rounded-xl bg-white/10 px-5 py-3 backdrop-blur-sm"
+              >
+                <div className="text-lg font-bold">{s.value}</div>
+                <div className="text-xs text-blue-200">{s.label}</div>
+              </div>
+            ))}
           </div>
         </div>
       </header>
 
-      {/* Features */}
+      {/* Why ChronoFlow */}
       <section className="mx-auto max-w-5xl px-6 py-16">
         <h2 className="text-center text-3xl font-bold text-slate-800">
-          Everything You Need for Secure Event Coordination
+          Why ChronoFlow?
         </h2>
         <p className="mx-auto mt-3 max-w-xl text-center text-slate-500">
-          Zero learning curve for non-professional organizers. Enterprise-grade
-          security for every organization.
+          Stop juggling spreadsheets, emails, and chat messages. ChronoFlow
+          brings everything into one place with zero learning curve.
         </p>
 
         <div className="mt-12 grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
@@ -104,110 +111,82 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* Architecture Strip */}
+      {/* How It Works */}
       <section className="border-t border-slate-200 bg-white">
         <div className="mx-auto max-w-5xl px-6 py-16">
           <h2 className="text-center text-3xl font-bold text-slate-800">
-            Built for Security at Every Layer
+            How It Works
           </h2>
 
-          <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            <LayerCard
-              title="Web Frontend"
-              tech="React 19 + TypeScript"
-              items={[
-                "CSP & HSTS headers",
-                "CSRF protection",
-                "Zod input validation",
-                "Semgrep SAST",
-              ]}
+          <div className="mt-12 grid gap-8 sm:grid-cols-3">
+            <Step
+              step="1"
+              icon={Globe}
+              title="Create Your Organization"
+              description="Set up your organization, invite members, and assign roles. Organizers manage events while members collaborate on tasks."
             />
-            <LayerCard
-              title="Mobile App"
-              tech="Flutter (iOS & Android)"
-              items={[
-                "Keychain / Keystore",
-                "Secure WebView",
-                "mobsfscan on PRs",
-                "Firebase Auth",
-              ]}
+            <Step
+              step="2"
+              icon={Zap}
+              title="Plan & Coordinate"
+              description="Create events, break them into tasks, form groups, set budgets, and track resources. Everyone gets notified instantly."
             />
-            <LayerCard
-              title="Backend Services"
-              tech="Spring Boot + Dubbo RPC"
-              items={[
-                "Sa-Token + TOTP MFA",
-                "Rate limiting",
-                "BCrypt hashing",
-                "Audit logging",
-              ]}
-            />
-            <LayerCard
-              title="Infrastructure"
-              tech="GKE on GCP + Terraform"
-              items={[
-                "Cloud Armor WAF",
-                "VPC segmentation",
-                "External Secrets",
-                "Private registry",
-              ]}
+            <Step
+              step="3"
+              icon={CheckCircle}
+              title="Execute & Review"
+              description="Run your event with QR check-in for attendees, real-time dashboards, and post-event analytics for continuous improvement."
             />
           </div>
         </div>
       </section>
 
+      {/* CTA */}
+      <section className="bg-gradient-to-r from-blue-900 to-indigo-900 text-white">
+        <div className="mx-auto max-w-3xl px-6 py-16 text-center">
+          <h2 className="text-3xl font-bold">
+            Ready to Simplify Your Events?
+          </h2>
+          <p className="mt-4 text-blue-200">
+            ChronoFlow gives every organizer the tools they need &mdash; without
+            the complexity they don&apos;t.
+          </p>
+        </div>
+      </section>
+
       {/* Footer */}
       <footer className="border-t border-slate-200 bg-slate-50">
-        <div className="mx-auto max-w-5xl px-6 py-8 text-center text-sm text-slate-400">
-          <p className="font-medium text-slate-600">
-            ChronoFlow &mdash; Team 3
-          </p>
-          <p className="mt-1">
-            NUS-ISS Graduate Certificate in Securing Ubiquitous Systems
-          </p>
-          <p className="mt-1">
-            Htet Aung &middot; Lu Shuwen &middot; Shirley Chow &middot; Thet
-            Naung Soe &middot; Walfarid Hermawan Limbong
-          </p>
+        <div className="mx-auto max-w-5xl px-6 py-6 text-center text-sm text-slate-400">
+          &copy; {new Date().getFullYear()} ChronoFlow. All rights reserved.
         </div>
       </footer>
     </div>
   );
 }
 
-function Stat({ value, label }: { value: string; label: string }) {
-  return (
-    <div className="rounded-xl bg-white/10 px-5 py-3 backdrop-blur-sm">
-      <div className="font-semibold">{value}</div>
-      <div className="text-xs text-blue-200">{label}</div>
-    </div>
-  );
-}
-
-function LayerCard({
+function Step({
+  step,
+  icon: Icon,
   title,
-  tech,
-  items,
+  description,
 }: {
+  step: string;
+  icon: React.ElementType;
   title: string;
-  tech: string;
-  items: string[];
+  description: string;
 }) {
   return (
-    <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
-      <h3 className="font-semibold text-slate-800">{title}</h3>
-      <p className="text-xs text-slate-400">{tech}</p>
-      <ul className="mt-3 space-y-1.5">
-        {items.map((item) => (
-          <li
-            key={item}
-            className="flex items-center gap-2 text-sm text-slate-600"
-          >
-            <CheckCircle className="h-3.5 w-3.5 shrink-0 text-green-500" />
-            {item}
-          </li>
-        ))}
-      </ul>
+    <div className="text-center">
+      <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-blue-100 text-blue-700">
+        <Icon className="h-7 w-7" />
+      </div>
+      <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-blue-600">
+        Step {step}
+      </div>
+      <h3 className="text-lg font-semibold text-slate-800">{title}</h3>
+      <p className="mt-2 text-sm leading-relaxed text-slate-500">
+        {description}
+      </p>
     </div>
   );
 }
