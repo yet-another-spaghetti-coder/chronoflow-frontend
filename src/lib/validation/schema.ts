@@ -661,6 +661,39 @@ export const MarkOpenedResponseSchema = z.object({
 
 export type NotificationFeed = z.infer<typeof NotificationFeedSchema>;
 
+/**
+ * WebSocket server-pushed message envelope (PLS 03: validate inbound WS).
+ *
+ * The backend sends two shapes on the post-auth channel:
+ *  1. Heartbeat reply: { type: "PONG", ts: number }
+ *  2. Notification push: WsPushRequestDTO shape { userId, eventId, type, title?, body?, data? }
+ *
+ * Anything else is rejected and dropped — the FE never executes or renders WS
+ * bytes as code (no eval / no innerHTML), so the worst case from a malformed
+ * push is a wrong cache invalidation, but validating still catches accidental
+ * format drift and would block a fabricated payload from polluting client state.
+ */
+export const WsPongMessageSchema = z.object({
+  type: z.literal("PONG"),
+  ts: z.number(),
+});
+
+export const WsPushMessageSchema = z.object({
+  userId: z.string().min(1),
+  eventId: z.string().min(1),
+  type: z.string().min(1),
+  title: z.string().optional(),
+  body: z.string().optional(),
+  data: z.record(z.string(), z.unknown()).optional(),
+});
+
+export const WsServerMessageSchema = z.union([
+  WsPongMessageSchema,
+  WsPushMessageSchema,
+]);
+
+export type WsServerMessage = z.infer<typeof WsServerMessageSchema>;
+
 //Attendee Dashboard
 export const attendeeSimpleSchema = z.object({
   name: z.string().nullable().optional(),
