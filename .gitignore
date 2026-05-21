@@ -20,6 +20,7 @@ lerna-debug.log*
 # Environment & Local
 .env
 .env.development
+.env.test
 .env.production
 *.local
 

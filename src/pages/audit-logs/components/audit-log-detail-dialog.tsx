@@ -79,7 +79,6 @@ export default function AuditLogDetailDialog({
               </Row>
               <Row label="Time">{log.createTime}</Row>
               <Row label="User ID">{log.userId}</Row>
-              <Row label="IP Address">{log.userIp || "—"}</Row>
             </div>
 
             {/* Operation info */}
