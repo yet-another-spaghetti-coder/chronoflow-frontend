@@ -4,5 +4,6 @@ self.FIREBASE_CONFIG = {
   "projectId": "chronoflow-1",
   "storageBucket": "chronoflow-1.firebasestorage.app",
   "messagingSenderId": "521897010746",
-  "appId": "1:521897010746:web:998878d0d835744149f703"
+  "appId": "1:521897010746:web:998878d0d835744149f703",
+  "measurementId": "G-1L4K3QT8C6"
 };

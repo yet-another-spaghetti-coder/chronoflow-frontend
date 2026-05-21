@@ -1,20 +1,38 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { getWS } from "./wsClient";
+import {
+  WsServerMessageSchema,
+  type WsServerMessage,
+} from "@/lib/validation/schema";
 
 export interface WSMessage {
   raw: string;
-  parsed?: unknown;
+  parsed?: WsServerMessage;
 }
 
 type Outbound = string | Record<string, unknown>;
 
-function safeParse(input: string): unknown | undefined {
+/**
+ * Parse an inbound WS frame and validate it against the allow-listed message
+ * envelope. Returns `undefined` if the frame is non-JSON or doesn't match a
+ * known shape; the caller drops such messages instead of forwarding them.
+ *
+ * PLS 03: treat WS bytes as data, never as code. Bounding parse cost and
+ * shape-checking before exposing to React state limits the blast radius of
+ * an authenticated-but-misbehaving server (or future XSS reading messages).
+ */
+function safeValidateServerMessage(input: string): WsServerMessage | undefined {
+  // Bound parse cost. 64KB matches the BE frame cap.
+  if (!input || input.length > 64 * 1024) return undefined;
+  let parsed: unknown;
   try {
-    return JSON.parse(input);
+    parsed = JSON.parse(input);
   } catch {
     return undefined;
   }
+  const result = WsServerMessageSchema.safeParse(parsed);
+  return result.success ? result.data : undefined;
 }
 
 export function useWebSocket(userId: string) {
@@ -35,10 +53,17 @@ export function useWebSocket(userId: string) {
 
     const unsubscribe = client.subscribe((evt: MessageEvent<string>) => {
       const raw = evt.data ?? "";
-      const parsed = safeParse(raw);
+      const parsed = safeValidateServerMessage(raw);
+      if (!parsed) {
+        // Unknown or malformed frame: drop without invalidating queries.
+        return;
+      }
       setMessagesRef.current((prev) => [...prev, { raw, parsed }]);
 
-      // invalidate feed + unread on any incoming WS event
+      // PONG is a heartbeat reply, not a data event.
+      if (parsed.type === "PONG") return;
+
+      // invalidate feed + unread on any pushed notification event
       queryClient.invalidateQueries({
         predicate: (q) => {
           const k = q.queryKey as unknown[];
