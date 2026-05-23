@@ -301,6 +301,31 @@ export async function handleGoogleRedirectResult(): Promise<AuthCredentials | nu
   return data;
 }
 
+// Password reset APIs
+
+/**
+ * Request a password reset link. Server responds 200 with a generic message regardless of
+ * whether the email exists, to prevent account enumeration.
+ */
+export async function forgotPassword(email: string): Promise<string> {
+  const res = await http.post("/users/auth/forgot-password", { email });
+  return unwrap<string>(res.data);
+}
+
+/**
+ * Consume a reset token and set a new password. Server returns true on success.
+ */
+export async function resetPassword(
+  token: string,
+  newPassword: string
+): Promise<boolean> {
+  const res = await http.post("/users/auth/reset-password", {
+    token,
+    newPassword,
+  });
+  return unwrap<boolean>(res.data);
+}
+
 // TOTP (Two-Factor Authentication) APIs
 
 export interface TotpSetupResponse {

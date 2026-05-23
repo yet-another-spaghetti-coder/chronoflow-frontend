@@ -4,6 +4,8 @@ import ErrorFallback from "@/components/error";
 import RequireAuth from "@/components/auth/require-auth";
 import RootPage from "@/pages/Root";
 import LoginPage from "@/pages/login";
+import ForgotPasswordPage from "@/pages/forgot-password";
+import ResetPasswordPage from "@/pages/reset-password";
 import OrganisationPage from "@/pages/organisation";
 import OrgEventsPage from "@/pages/events";
 import SpecificEventDashboardPage from "@/pages/event-dashboard";
@@ -22,6 +24,14 @@ const router = createBrowserRouter([
   {
     path: "/login",
     element: <LoginPage />,
+  },
+  {
+    path: "/forgot-password",
+    element: <ForgotPasswordPage />,
+  },
+  {
+    path: "/reset-password",
+    element: <ResetPasswordPage />,
   },
 
   {

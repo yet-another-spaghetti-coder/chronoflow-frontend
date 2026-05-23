@@ -276,7 +276,7 @@ export function LoginCard({ onRegistrationSelection }: LoginCardProps) {
                 id="username"
                 type="text"
                 autoComplete="username"
-                placeholder="Enter your username"
+                placeholder="Enter your username (not email)"
                 className="pl-9"
                 aria-invalid={!!errors.username}
                 {...register("username")}
@@ -293,6 +293,13 @@ export function LoginCard({ onRegistrationSelection }: LoginCardProps) {
           <div className="grid gap-2">
             <div className="flex items-center justify-between">
               <Label htmlFor="password">Password</Label>
+              <button
+                type="button"
+                onClick={() => navigate("/forgot-password")}
+                className="text-xs font-medium text-muted-foreground underline-offset-4 hover:underline hover:text-foreground"
+              >
+                Forgot password?
+              </button>
             </div>
             <div className="relative">
               <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />

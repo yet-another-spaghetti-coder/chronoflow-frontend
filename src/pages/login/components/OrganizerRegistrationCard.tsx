@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/tooltip";
 import { Eye, EyeOff, Info } from "lucide-react";
 import { useState } from "react";
+import { PasswordStrengthMeter } from "@/components/auth/PasswordStrengthMeter";
 
 type OrganizerRegistrationFormProps = {
   onBack: () => void;
@@ -68,12 +69,15 @@ export function OrganizerRegistrationCard({
   const {
     register,
     handleSubmit,
+    watch,
     formState: { errors, isSubmitting },
     reset,
   } = useForm<OrganizerRegistration>({
     resolver: zodResolver(organizerRegistrationSchema),
     defaultValues,
+    mode: "onChange",
   });
+  const watchedPassword = watch("user_password") ?? "";
 
   const onSubmit = handleSubmit(async (values) => {
     try {
@@ -187,7 +191,7 @@ export function OrganizerRegistrationCard({
                 type={showPwd ? "text" : "password"}
                 autoComplete="new-password"
                 aria-required
-                placeholder="At least 8 characters"
+                placeholder="At least 12 chars with upper, lower, digit, symbol"
                 {...register("user_password")}
                 aria-invalid={!!errors.user_password}
                 className="pr-10"
@@ -205,6 +209,7 @@ export function OrganizerRegistrationCard({
                 )}
               </button>
             </div>
+            <PasswordStrengthMeter password={watchedPassword} />
             <ErrorText msg={errors.user_password?.message} />
           </div>
 

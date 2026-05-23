@@ -4,6 +4,7 @@ import {
   type AllowAction,
 } from "@/services/eventTask";
 import { z } from "zod";
+import { strongPasswordSchema } from "./passwordPolicy";
 
 //Login
 export const loginUserSchema = z.object({
@@ -25,10 +26,7 @@ export const organizerRegistrationSchema = z.object({
       /^[a-zA-Z0-9._-]+$/,
       "Only letters, numbers, dot, underscore, hyphen"
     ),
-  user_password: z
-    .string()
-    .min(8, "Password must be at least 8 characters")
-    .max(100, "Password must not exceed 100 characters"),
+  user_password: strongPasswordSchema,
   user_email: z
     .string()
     .trim()
@@ -75,7 +73,7 @@ export const memberCompleteRegistrationSchema = z.object({
       /^[a-zA-Z0-9._-]+$/,
       "Only letters, numbers, dot, underscore, hyphen"
     ),
-  user_password: z.string().min(8, "Password must be at least 8 characters"),
+  user_password: strongPasswordSchema,
   user_mobile: z
     .string()
     .trim()

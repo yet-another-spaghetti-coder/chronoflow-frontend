@@ -20,6 +20,7 @@ import {
 } from "@/lib/validation/schema";
 import { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
+import { PasswordStrengthMeter } from "@/components/auth/PasswordStrengthMeter";
 
 type Prefill = { user_id: string } & MemberPrefill;
 
@@ -59,6 +60,7 @@ export function MemberRegistrationCard({
   const {
     register,
     handleSubmit,
+    watch,
     formState: { errors, isSubmitting },
     reset,
   } = useForm<MemberCompleteRegistration>({
@@ -69,7 +71,9 @@ export function MemberRegistrationCard({
       user_password: "",
       user_mobile: "",
     },
+    mode: "onChange",
   });
+  const watchedPassword = watch("user_password") ?? "";
 
   const onSubmit = handleSubmit(async (values) => {
     try {
@@ -172,7 +176,7 @@ export function MemberRegistrationCard({
                 type={showPwd ? "text" : "password"}
                 autoComplete="new-password"
                 aria-required
-                placeholder="At least 8 characters"
+                placeholder="At least 12 chars with upper, lower, digit, symbol"
                 {...register("user_password")}
                 aria-invalid={!!errors.user_password}
                 className="pr-10"
@@ -190,6 +194,7 @@ export function MemberRegistrationCard({
                 )}
               </button>
             </div>
+            <PasswordStrengthMeter password={watchedPassword} />
             <ErrorText msg={errors.user_password?.message} />
           </div>
 
